@@ -1,4 +1,4 @@
-#include "AbstractSyntaxTree.h"
+
 
 /* MODULE INTERNAL STATE */
 
@@ -64,3 +64,83 @@ void releaseProgram(Program * program) {
 		free(program);
 	}
 }
+///////
+#include "AbstractSyntaxTree.h"
+
+/* ... existing code ... */
+
+/* New types */
+typedef enum {
+    CREATE_ACTION,
+    SELECT_ACTION,
+    DELETE_ACTION,
+    ADD_ACTION
+} ActionType;
+
+typedef struct {
+    char* name;
+    DataType type;
+} Column;
+
+typedef struct {
+    char* tableName;
+    Column* columns;
+    int columnCount;
+} CreateAction;
+
+typedef struct {
+    char** columns;
+    int columnCount;
+    char* tableName;
+    Condition* where;
+} SelectAction;
+
+typedef struct {
+    char* tableName;
+    Condition* where;
+} DeleteAction;
+
+typedef struct {
+    char* tableName;
+    Value* values;
+    int valueCount;
+} AddAction;
+
+typedef struct {
+    ActionType type;
+    union {
+        CreateAction create;
+        SelectAction select;
+        DeleteAction delete;
+        AddAction add;
+    } action;
+} Action;
+
+typedef struct {
+    Action* action;
+} Program;
+
+/* New release functions */
+void releaseAction(Action* action) {
+    if (action == NULL) return;
+    
+    switch (action->type) {
+        case CREATE_ACTION:
+            free(action->action.create.tableName);
+            for (int i = 0; i < action->action.create.columnCount; i++) {
+                free(action->action.create.columns[i].name);
+            }
+            free(action->action.create.columns);
+            break;
+        /* ... other cases ... */
+    }
+    free(action);
+}
+
+void releaseProgram(Program* program) {
+    if (program == NULL) return;
+    releaseAction(program->action);
+    free(program);
+}
+
+/* ... other necessary functions ... */

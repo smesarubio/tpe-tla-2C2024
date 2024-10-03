@@ -30,5 +30,18 @@ Token IntegerLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
 Token ParenthesisLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token);
 
 Token UnknownLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+//new
+Token JsonBraceLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token);
+Token JsonBracketLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token);
+Token JsonColonLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+Token JsonCommaLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+Token SqlKeywordLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token);
+Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+Token NullLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+Token IdentifierLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
+
+#endif
 
 #endif
