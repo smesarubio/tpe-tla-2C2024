@@ -18,8 +18,8 @@
 "}"                         { return JsonBraceLexemeAction(createLexicalAnalyzerContext(), RBRACE); }
 "["                         { return JsonBracketLexemeAction(createLexicalAnalyzerContext(), LBRACKET); }
 "]"                         { return JsonBracketLexemeAction(createLexicalAnalyzerContext(), RBRACKET); }
-":"                         { return JsonColonLexemeAction(createLexicalAnalyzerContext(), COLON); }
-","                         { return JsonCommaLexemeAction(createLexicalAnalyzerContext(), COMMA); }
+":"                         { return JsonColonLexemeAction(createLexicalAnalyzerContext()); }
+","                         { return JsonCommaLexemeAction(createLexicalAnalyzerContext()); }
 
 "CREATE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), CREATE); }
 "SELECT"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SELECT); }
@@ -30,13 +30,13 @@
 "VALUES"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), VALUES); }
 "DELETE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), DELETE); }
 
-"true"                      { return TRUE; }
-"false"                     { return FALSE; }
-"null"                      { return NULL; }
+"true"                      { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
+"false"                     { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
+"null"                      { return NullLexemeAction(createLexicalAnalyzerContext()); }
 
 \"(\\.|[^"\\])*\"           { return StringLexemeAction(createLexicalAnalyzerContext());} 
-[[:digit:]]+				{ return IntegerLexemeAction(createLexicalAnalyzerContext()); }
-[0-9]+"."[0-9]+             { return FLOAT; }
+[[:digit:]]+				{ return IntegerLexemeAction(createLexicalAnalyzerContext());}
+[0-9]+"."[0-9]+             { return FloatLexemeAction(createLexicalAnalyzerContext()); }
 
 [a-zA-Z_][a-zA-Z0-9_]*      { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
 
