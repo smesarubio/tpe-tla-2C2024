@@ -50,7 +50,7 @@ void EndMultilineCommentLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerCon
 
 void IgnoredLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	if (_logIgnoredLexemes) {
-		_logLexicalAnalyzerContext(__FUNCTIO	N__, lexicalAnalyzerContext);
+		_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
 	}
 }
 

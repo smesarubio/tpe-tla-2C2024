@@ -29,12 +29,22 @@
 "INTO"                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INTO); }
 "VALUES"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), VALUES); }
 "DELETE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), DELETE); }
+"UPDATE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), UPDATE); }
+"SET"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SET); }
+"GROUP BY"                  { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), GROUP_BY); }
+"HAVING"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), HAVING); }
+"COUNT"                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), COUNT); }
+"SUM"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SUM); }
+"AVG"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), AVG); }
+"MAX"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MAX); }
+"MIN"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MIN); }
+
 
 "true"                      { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
 "false"                     { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
 "null"                      { return NullLexemeAction(createLexicalAnalyzerContext()); }
 
-\"(\\.|[^"\\])*\"           { return StringLexemeAction(createLexicalAnalyzerContext());} 
+\"(\\.|[^"\\])*\"           { return StringLexemeAction(createLexicalAnalyzerContext());}
 [[:digit:]]+				{ return IntegerLexemeAction(createLexicalAnalyzerContext());}
 [0-9]+"."[0-9]+             { return FloatLexemeAction(createLexicalAnalyzerContext()); }
 

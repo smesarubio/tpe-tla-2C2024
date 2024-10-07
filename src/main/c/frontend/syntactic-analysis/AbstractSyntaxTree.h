@@ -66,6 +66,8 @@ struct Program {
 	Expression * expression;
 };
 
+stric
+
 /**
  * Node recursive destructors.
  */
