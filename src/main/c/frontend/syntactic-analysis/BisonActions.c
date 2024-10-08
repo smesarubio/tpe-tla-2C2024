@@ -86,7 +86,7 @@ Program * ExpressionProgramSemanticAction(CompilerState * compilerState, Express
 }
 
 
-/*
+
 static Logger * _logger = NULL;
 
 void initializeBisonActionsModule() {
@@ -150,4 +150,4 @@ Program* ProgramSemanticAction(CompilerState* compilerState, Action* action) {
     compilerState->abstractSyntaxtTree = program;
     compilerState->succeed = true;
     return program;
-}*/
+}

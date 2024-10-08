@@ -50,8 +50,8 @@
 %token <token> WHERE
 %token <token> COMMA
 %token <token> COLON
-%token <token> BRACE_OPEN
-%token <token> BRACE_CLOSE
+%token <token> LBRACE
+%token <token> RBRACE
 %token <token> DOT
 %token <token> BRACKET_OPEN
 %token <token> BRACKET_CLOSE
@@ -98,10 +98,15 @@
 %left MUL DIV
 %%
 
-program: json_query                          { $$ = ProgramSemanticAction(currentCompilerState(), $1); }
+program:json_query                           { $$ = ProgramSemanticAction(currentCompilerState(), $1); }
 				;
 
-json_query: create_action                    { $$ = $1; }
+/**Que va a la derecha?*/
+
+json_query: action
+                |LBRACE action COMMA action RBRACE
+
+action:     create_action                                { $$ = $1; }
 				| select_action                          { $$ = $1; }
 				| delete_action                          { $$ = $1; }
 				| add_action                             { $$ = $1; }
@@ -109,57 +114,57 @@ json_query: create_action                    { $$ = $1; }
 				;
 
 create_action:
-                BRACE_OPEN
-                CREATE COLON BRACE_OPEN
+                LBRACE
+                CREATE COLON LBRACE
                 TABLE COLON STRING COMMA
                 COLUMNS COLON column_object
-                BRACE_CLOSE
-                BRACE_CLOSE                              { $$ = CreateActionSemanticAction($7, $11); }
+                RBRACE
+                RBRACE                              { $$ = CreateActionSemanticAction($7, $11); }
                 ;
 
 select_action:
-				BRACE_OPEN
-                SELECT COLON BRACE_OPEN
+				LBRACE
+                SELECT COLON LBRACE
                 COLUMNS COLON column_list COMMA
                 FROM COLON STRING COMMA
                 WHERE COLON where_object COMMA
                 GROUP_BY COLON column_list COMMA
                 HAVING COLON having_object
-                BRACE_CLOSE
-                BRACE_CLOSE                              { $$ = SelectActionSemanticAction($7, $11, $15, $19, $23); }
+                RBRACE
+                RBRACE                              { $$ = SelectActionSemanticAction($7, $11, $15, $19, $23); }
                 ;
 
 delete_action:
-				BRACE_OPEN
-				DELETE COLON BRACE_OPEN
+				LBRACE
+				DELETE COLON LBRACE
 				FROM COLON STRING COMMA
 				WHERE COLON where_object
-				BRACE_CLOSE
-				BRACE_CLOSE                              { $$ = DeleteActionSemanticAction($7, $11); }
+				RBRACE
+				RBRACE                              { $$ = DeleteActionSemanticAction($7, $11); }
 				;
 
 add_action:
-				BRACE_OPEN
-				ADD COLON BRACE_OPEN
+				LBRACE
+				ADD COLON LBRACE
 				TABLE COLON STRING COMMA
 				VALUES COLON array
-				BRACE_CLOSE
-				BRACE_CLOSE                              { $$ = AddActionSemanticAction($7, $11); }
+				RBRACE
+				RBRACE                              { $$ = AddActionSemanticAction($7, $11); }
 				;
 
 update_action:
-                BRACE_OPEN
-                UPDATE COLON BRACE_OPEN
+                LBRACE
+                UPDATE COLON LBRACE
                 TABLE COLON STRING COMMA
                 SET COLON update_list COMMA
                 WHERE COLON where_object
-                BRACE_CLOSE
-                BRACE_CLOSE                              { $$ = UpdateActionSemanticAction($7, $11, $15); }
+                RBRACE
+                RBRACE                              { $$ = UpdateActionSemanticAction($7, $11, $15); }
                 ;
 
 
 column_object:
-                BRACE_OPEN column_list BRACE_CLOSE       { $$ = $2; }
+                LBRACE column_list RBRACE       { $$ = $2; }
                 ;
 
 column_list:
@@ -168,18 +173,18 @@ column_list:
                 ;
 
 column_value:
-				STRING COLON BRACE_OPEN
+				STRING COLON LBRACE
 				TYPE COLON STRING COMMA
 				NAME COLON STRING
-				BRACE_CLOSE                              { $$ = ColumnValueSemanticAction($6, $8); }
-				| STRING COLON BRACE_OPEN
+				RBRACE                              { $$ = ColumnValueSemanticAction($6, $8); }
+				| STRING COLON LBRACE
 				TYPE COLON STRING COMMA
 				NAME COLON STRING
-				BRACE_CLOSE COMMA column_value           { $$ = ColumnValueListSemanticAction($6, $8, $12); }
+				RBRACE COMMA column_value           { $$ = ColumnValueListSemanticAction($6, $8, $12); }
 				;
 
 update_list:
-                BRACE_OPEN update_items BRACE_CLOSE      { $$ = $2; }
+                LBRACE update_items RBRACE      { $$ = $2; }
                 ;
 
 update_items:
