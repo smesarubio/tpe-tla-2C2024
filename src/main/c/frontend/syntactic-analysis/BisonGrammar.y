@@ -15,9 +15,26 @@
 	Token token;
 
 	/** Non-terminals. */
-	Object* object;
-	List* list;
-	char* value;
+	JsonQuery * json_query;
+    Action * action;
+    CreateAction * create_action;
+    DeleteAction * delete_action;
+    SelectAction * select_action;
+    AddAction * add_action;
+    UpdateAction * update_action;
+    ColumnObject * column_object;
+    ColumnList * column_list;
+    ColumnValue * column_value;
+    UpdateList * update_list;
+    UpdateItems * update_items;
+    StringList * string_list;
+    WhereObject * where_object;
+    HavingOvject * having_object;
+    Condition * condition;
+    Value * value;
+    Array * array;
+    ValueList * value_list;     
+    
 }
 
 

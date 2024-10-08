@@ -26,12 +26,12 @@ typedef struct Program Program;
  * Node types for the Abstract Syntax Tree (AST).
  */
 
-enum ExpressionType {
-	ADDITION,
-	DIVISION,
-	FACTOR,
-	MULTIPLICATION,
-	SUBTRACTION
+enum ActionType {
+	CREATE,
+	SELECT,
+	DELETE,
+	ADD,
+	UPDATE
 };
 
 enum FactorType {
@@ -66,7 +66,7 @@ struct Program {
 	Expression * expression;
 };
 
-stric
+
 
 /**
  * Node recursive destructors.
