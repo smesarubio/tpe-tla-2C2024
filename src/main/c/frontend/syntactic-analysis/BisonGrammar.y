@@ -24,10 +24,8 @@
     UpdateAction * update_action;
     ColumnObject * column_object;
     ColumnList * column_list;
-    ColumnValue * column_value;
     UpdateList * update_list;
     UpdateItems * update_items;
-    StringList * string_list;
     WhereObject * where_object;
     HavingObject * having_object;
     Condition * condition;
@@ -95,8 +93,6 @@
 %token <token> VALUES
 %token <token> SET
 %token <token> NOT
-%token <token> TYPE
-%token <token> NAME
 
 /** Non-terminals. */
 %type <json_query> json_query
@@ -108,10 +104,8 @@
 %type <update_action> update_action
 %type <column_object> column_object
 %type <column_list> column_list
-%type <column_value> column_value
 %type <update_list> update_list
 %type <update_items> update_items
-%type <string_list> string_list
 %type <where_object> where_object
 %type <having_object> having_object
 %type <condition> condition
@@ -211,16 +205,6 @@ column_list:
                 | STRING COLON STRING COMMA column_list[col_list]  { $$ = ColumnListSemanticAction($1, $3, $col_list); }
                 ;
 
-column_value:
-				STRING COLON LBRACE
-				TYPE COLON STRING COMMA
-				NAME COLON STRING
-				RBRACE                              { $$ = ColumnValueSemanticAction($6, $8, NULL); }
-				| STRING COLON LBRACE
-				TYPE COLON STRING[str] COMMA
-				NAME COLON STRING
-				RBRACE COMMA column_value[col_val]           { $$ = ColumnValueSemanticAction($str, $8, $col_val); }
-				;
 
 update_list:
                 LBRACE update_items[upd_itmes] RBRACE      { $$ = $upd_itmes; }
@@ -231,11 +215,6 @@ update_items:
                 | STRING COLON value[val] COMMA update_items[upd_itmes]  { $$ = UpdateItemSemanticAction($1, $val, $upd_itmes); }
                 ;
 
-
-string_list:
-				STRING                                             { $$ = ColumnListSemanticAction($1, 1); }
-				| STRING COMMA string_list[str_list]               { $$ = ColumnListAppendSemanticAction($1, $str_list); }
-				;
 
 where_object:
             condition[cond]                                { $$ = $cond; }
@@ -261,12 +240,19 @@ condition:
             ;
 
 aggregate_function:
-                COUNT | SUM | AVG | MAX | MIN            { $$ = $1; }
-                ;
+                COUNT   { $$ = $1; }
+                | SUM   { $$ = $1; }
+                | AVG   { $$ = $1; }
+                | MAX   { $$ = $1; }
+                | MIN   { $$ = $1; }
+                ;   
 
 
 operator: 
-                EQUALS | GREATER_THAN | LESS_THAN        {$$ = $1; }
+                EQUALS             {$$ = $1; }
+                | GREATER_THAN     {$$ = $1; }
+                | LESS_THAN        {$$ = $1; }
+                ;
 
 value:
             STRING                                   { $$ = StringValueSemanticAction($1); }

@@ -20,8 +20,8 @@ const int main(const int count, const char ** arguments) {
 	initializeBisonActionsModule();
 	initializeSyntacticAnalyzerModule();
 	initializeAbstractSyntaxTreeModule();
-	initializeCalculatorModule();
-	initializeGeneratorModule();
+	//initializeCalculatorModule();
+	//initializeGeneratorModule();
 
 	// Logs the arguments of the application.
 	for (int k = 0; k < count; ++k) {
@@ -39,7 +39,7 @@ const int main(const int count, const char ** arguments) {
 	if (syntacticAnalysisStatus == ACCEPT) {
 		// ----------------------------------------------------------------------------------------
 		// Beginning of the Backend... ------------------------------------------------------------
-		logDebugging(logger, "Computing expression value...");
+		/*logDebugging(logger, "Computing expression value...");
 		Program * program = compilerState.abstractSyntaxtTree;
 		ComputationResult computationResult = computeExpression(program->expression);
 		if (computationResult.succeed) {
@@ -49,11 +49,11 @@ const int main(const int count, const char ** arguments) {
 		else {
 			logError(logger, "The computation phase rejects the input program.");
 			compilationStatus = FAILED;
-		}
+		}*/
 		// ...end of the Backend. -----------------------------------------------------------------
 		// ----------------------------------------------------------------------------------------
 		logDebugging(logger, "Releasing AST resources...");
-		releaseProgram(program);
+		//releaseProgram(program);
 	}
 	else {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");

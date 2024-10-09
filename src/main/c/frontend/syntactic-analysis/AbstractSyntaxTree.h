@@ -14,8 +14,39 @@ void shutdownAbstractSyntaxTreeModule();
  * This typedefs allows self-referencing types.
  */
 
+typedef struct JsonQuery JsonQuery;
+typedef struct Action Action;
+typedef struct CreateAction CreateAction;
+typedef struct DeleteAction DeleteAction;
+typedef struct SelectAction SelectAction;
+typedef struct AddAction AddAction;
+typedef struct UpdateAction UpdateAction;
+typedef struct ColumnObject ColumnObject;
+typedef struct ColumnList ColumnList;
+typedef struct ColumnValue ColumnValue;
+typedef struct UpdateList UpdateList;
+typedef struct UpdateItems UpdateItems;
+typedef struct StringList StringList;
+typedef struct WhereObject WhereObject;
+typedef struct HavingObject HavingObject;
+typedef struct HavingCondition HavingCondition;
+typedef struct Condition Condition;
+typedef struct Value Value;
+typedef struct Array Array;
+typedef struct ValueList ValueList;
+typedef struct Function Function;
+typedef struct String String;
+typedef struct Integer Integer;
+typedef struct Float Float;
+typedef struct LogOp LogOp;
+typedef struct AggFunc AggFunc;
+typedef struct Operator Operator;
+
 typedef enum ExpressionType ExpressionType;
 typedef enum FactorType FactorType;
+typedef enum OperatorType OperatorType;
+typedef enum LogOpType LogOpType;
+typedef enum AggFuncType AggFuncType;
 
 typedef struct Constant Constant;
 typedef struct Expression Expression;
@@ -26,7 +57,7 @@ typedef struct Program Program;
  * Node types for the Abstract Syntax Tree (AST).
  */
 
-typedef struct JsonQuery {
+struct JsonQuery {
     union {
         Action* action;
         struct {
@@ -34,9 +65,9 @@ typedef struct JsonQuery {
             struct JsonQuery* json_query;
         } node;
     } query;
-} JsonQuery;
+};
 
-typedef struct Action {
+struct Action {
     union {
         CreateAction* create_action;
         DeleteAction* delete_action;
@@ -44,42 +75,42 @@ typedef struct Action {
         AddAction* add_action;
         UpdateAction* update_action;
     } actions;
-} Action;
+};
 
-typedef struct CreateAction {
+struct CreateAction {
     String* table_name;
     ColumnObject* column_object;
-} CreateAction;
+};
 
-typedef struct DeleteAction {
+struct DeleteAction {
     String* table_name; 
     WhereObject* where_object;
-} DeleteAction;
+};
 
-typedef struct SelectAction {
+struct SelectAction {
     ColumnList* table_column_list;
     String* table_name;
     WhereObject* where_objects;
     ColumnList* group_by_column_list;
     HavingObject* having_object;
-} SelectAction;
+};
 
-typedef struct AddAction {
+struct AddAction {
     String* table_name;
     Array* array; 
-} AddAction;
+};
 
-typedef struct UpdateAction {
+struct UpdateAction {
     String* table_name;
     UpdateList* update_list;
     WhereObject* where_object;
-} UpdateAction;
+};
 
-typedef struct ColumnObject {
+struct ColumnObject {
     ColumnList* column_list;
-} ColumnObject;
+};
 
-typedef struct ColumnList {
+struct ColumnList {
     union {
         struct {
             String* left;
@@ -91,17 +122,17 @@ typedef struct ColumnList {
             struct ColumnList* column_list;
         } second;
     } u;
-} ColumnList;
+};
 
-typedef struct ColumnValue {
+struct ColumnValue {
     // Definir los campos aquí
-} ColumnValue;
+};
 
-typedef struct UpdateList {
+struct UpdateList {
     UpdateItems* update_items;
-} UpdateList;
+};
 
-typedef struct UpdateItems {
+struct UpdateItems {
     union {
         struct {
             String* string;
@@ -113,21 +144,10 @@ typedef struct UpdateItems {
             UpdateItems* update_items;
         } second;
     } update_items_union;
-} UpdateItems;
+};
 
-typedef struct StringList {
-    union {
-        struct {
-            String* string;
-        } first;
-        struct {
-            String* string;
-            StringList* string_list;
-        } second;
-    } string_list_union;
-} StringList;
 
-typedef struct WhereObject {
+struct WhereObject {
     union {
         struct {
             Condition* condition;
@@ -140,11 +160,11 @@ typedef struct WhereObject {
         struct {
             LogOp* log_op;
             WhereObject* where_object;
-        }third;
+        } third;
     } where_object_union;
-} WhereObject;
+};
 
-typedef struct HavingObject {
+struct HavingObject {
     union {
         struct {
             Condition* condition;
@@ -157,35 +177,35 @@ typedef struct HavingObject {
         struct {
             LogOp* log_op;
             HavingObject* having_object;
-        }third;
+        } third;
     } having_object_union;
-} HavingObject;
+};
 
-typedef struct HavingCondition{
+struct HavingCondition {
     AggFunc* aggregate_func;
     Operator* operator;
     Value* value;
-}HavingCondition;
+};
 
-typedef struct Condition {
+struct Condition {
     String* string;
     Operator* operator;
     Value* value;
-} Condition;
+};
 
-typedef struct Value {
+struct Value {
     union {
         String* string;
         Integer* integer;
         Float* float_value;
     } values;
-} Value;
+};
 
-typedef struct Array {
+struct Array {
     ValueList* value_list;    
-} Array;
+};
 
-typedef struct ValueList {
+struct ValueList {
     union {
         struct {
             Value* value;
@@ -195,55 +215,55 @@ typedef struct ValueList {
             ValueList* value_list;
         } second;
     } value_list_union;
-} ValueList;
+};
 
-typedef struct Function {
+struct Function {
     // Definir los campos aquí
-} Function;
+};
 
-typedef struct String {
+struct String {
     char* value;
-} String;
+};
 
-typedef struct Integer {
+struct Integer {
     int value;
-} Integer;
+};
 
-typedef struct Float {
+struct Float {
     float value;
-} Float;
+};
 
-typedef struct LogOp {
-    LogOpType log_op_value;
-} LogOp;
+struct LogOp {
+    LogOpType* log_op_value;
+};
 
-typedef struct AggFunc {
-    AggFuncType agg_func_value;
-} AggFunc;
+struct AggFunc {
+    AggFuncType* agg_func_value;
+};
 
-typedef struct Operator {
-    OperatorType operator_type;
-} Operator;
+struct Operator {
+    OperatorType* operator_type;
+};
 
-typedef enum OperatorType {
+enum OperatorType {
     EQUALS,
     GREATER_THAN,
     LESS_THAN
-} OperatorType;
+};
 
-typedef enum LogOpType {
+enum LogOpType {
     NOT,
     AND,
     OR
-} LogOpType;
+};
 
-typedef enum AggFuncType {
+enum AggFuncType {
     COUNT,
     SUM,
     AVG,
     MAX,
     MIN
-} AggFuncType;
+};
 
 enum ActionType {
     CREATE,
