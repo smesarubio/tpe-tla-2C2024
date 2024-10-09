@@ -11,8 +11,8 @@
 
 "{"                         { return JsonBraceLexemeAction(createLexicalAnalyzerContext(), LBRACE); }
 "}"                         { return JsonBraceLexemeAction(createLexicalAnalyzerContext(), RBRACE); }
-"["                         { return JsonBracketLexemeAction(createLexicalAnalyzerContext(), LBRACKET); }
-"]"                         { return JsonBracketLexemeAction(createLexicalAnalyzerContext(), RBRACKET); }
+"["                         { return JsonBracketLexemeAction(createLexicalAnalyzerContext(), BRACKET_OPEN); }
+"]"                         { return JsonBracketLexemeAction(createLexicalAnalyzerContext(), BRACKET_CLOSE); }
 ":"                         { return JsonColonLexemeAction(createLexicalAnalyzerContext()); }
 ","                         { return JsonCommaLexemeAction(createLexicalAnalyzerContext()); }
 

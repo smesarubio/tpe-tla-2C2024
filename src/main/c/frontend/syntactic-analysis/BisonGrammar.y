@@ -93,6 +93,7 @@
 %token <token> VALUES
 %token <token> SET
 %token <token> NOT
+%token <token> NUL
 
 /** Non-terminals. */
 %type <json_query> json_query

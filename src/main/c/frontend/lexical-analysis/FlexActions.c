@@ -113,8 +113,8 @@ Token SqlKeywordLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, To
 Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
     // Remove quotes and handle escape characters
-    char* unescaped = unescapeString(lexicalAnalyzerContext->lexeme + 1, lexicalAnalyzerContext->length - 2);
-    lexicalAnalyzerContext->semanticValue->string = unescaped;
+    //char* unescaped = unescapeString(lexicalAnalyzerContext->lexeme + 1, lexicalAnalyzerContext->length - 2);
+    lexicalAnalyzerContext->semanticValue->string = lexicalAnalyzerContext->lexeme;
     return STRING;
 }
 
@@ -131,7 +131,7 @@ Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 */
 Token NullLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-    return NULL;
+    return NUL;
 }
 
 Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
