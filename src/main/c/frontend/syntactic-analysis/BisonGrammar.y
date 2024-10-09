@@ -37,7 +37,8 @@
     Function * function;
     AggFunc* aggregate_function;
     Operator* operator;
-    LogOp* logical_op
+    LogOp* logical_op;
+    HavingCondition* having_condition;
 }
 
 
@@ -61,7 +62,7 @@
 /** Terminals. */
 %token <string> STRING
 %token <integer> INTEGER
-%token <float> FLOAT
+%token <float_value> FLOAT
 %token <token> SELECT
 %token <token> DELETE
 %token <token> FROM
@@ -72,7 +73,6 @@
 %token <token> COLON
 %token <token> LBRACE
 %token <token> RBRACE
-%token <token> DOT
 %token <token> BRACKET_OPEN
 %token <token> BRACKET_CLOSE
 %token <token> EQUALS
@@ -89,6 +89,14 @@
 %token <token> AVG
 %token <token> MAX
 %token <token> MIN
+%token <token> TABLE
+%token <token> COLUMNS
+%token <token> UPDATE
+%token <token> VALUES
+%token <token> SET
+%token <token> NOT
+%token <token> TYPE
+%token <token> NAME
 
 /** Non-terminals. */
 %type <json_query> json_query
@@ -110,11 +118,10 @@
 %type <value> value
 %type <array> array
 %type <value_list> value_list
-%type <function> function
 %type <operator> operator
 %type <aggregate_function> aggregate_function
 %type <logical_op> logical_op
-
+%type <having_condition> having_condition
 
 
 
@@ -126,8 +133,6 @@
 %left OR
 %left AND
 %left EQUALS GREATER_THAN LESS_THAN
-%left ADD SUB
-%left MUL DIV
 
 //nuestro simbolo inicial
 
@@ -138,7 +143,7 @@
 
 
 json_query:     action[act]                                 { $$ = JsonQuerySemanticAction((Action) $act, NULL)}
-                |LBRACE action COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction((Action) $act, $query)}
+                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction((Action) $act, $query)}
 
 action:     create_action                                { $$ = $1; }
 				| select_action                          { $$ = $1; }
@@ -162,10 +167,10 @@ select_action:
                 COLUMNS COLON column_list[col_list] COMMA
                 FROM COLON STRING COMMA
                 WHERE COLON where_object[where_obj] COMMA
-                GROUP_BY COLON column_list[col_list] COMMA
+                GROUP_BY COLON column_list[group_col_list] COMMA
                 HAVING COLON having_object[hav_obj]
                 RBRACE
-                RBRACE                              { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $col_list, $hav_obj); }
+                RBRACE                              { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $group_col_list, $hav_obj); }
                 ;
 
 delete_action:
@@ -242,16 +247,16 @@ where_object:
 having_object:
             having_condition[hav_con]                                { $$ = $hav_con; }
             | having_condition[hav_con] logical_op[log_op] having_object[hav_obj]     { $$ = HavingObjectSemanticAction($hav_con, $log_op, $hav_obj); }
-            | NOT having_object                            { $$ = HavingObjectSemanticAction(NULL, NOT, $3); }
+            | NOT having_object[hav_obj]                            { $$ = HavingObjectSemanticAction(NULL, NOT, $hav_obj); }
             ;
 
 having_condition: 
-            aggregate_function[agg_func] PARENTHESIS_OPEN STRING[str] PARENTHESIS_CLOSE operator[op] value[value]
-                                                    { $$ = HavingConditionSemanticAction($agg_func, $str, $op, $value); }
+            aggregate_function[agg_func] PARENTHESIS_OPEN STRING[str] PARENTHESIS_CLOSE operator[op] value[val]
+                                                    { $$ = HavingConditionSemanticAction($agg_func, $str, $op, $val); }
             ;
 
 condition:
-            STRING[str] operator value[value]                      { $$ = ConditionSemanticAction($str, EQUALS, $value); }
+            STRING[str] operator value[val]                      { $$ = ConditionSemanticAction($str, EQUALS, $val); }
         
             ;
 
@@ -278,6 +283,8 @@ value_list:
 				| value COMMA value_list                 { $$ = ValueListAppendSemanticAction($1, $3); }
 				;
                 
-logical_op:     AND | OR;          { $$ = $1 }
+logical_op:     AND     { $$ = $1 }
+                | OR    { $$ = $1 }
+                ;          
 
 %%
