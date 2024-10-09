@@ -246,36 +246,36 @@ struct Operator {
 };
 
 enum OperatorType {
-    EQUALS,
-    GREATER_THAN,
-    LESS_THAN
+    E_EQUALS,
+    E_GREATER_THAN,
+    E_LESS_THAN
 };
 
 enum LogOpType {
-    NOT,
-    AND,
-    OR
+    E_NOT,
+    E_AND,
+    E_OR
 };
 
 enum AggFuncType {
-    COUNT,
-    SUM,
-    AVG,
-    MAX,
-    MIN
+    E_COUNT,
+    E_SUM,
+    E_AVG,
+    E_MAX,
+    E_MIN
 };
 
 enum ActionType {
-    CREATE,
-    SELECT,
-    DELETE,
-    ADD,
-    UPDATE
+    E_CREATE,
+    E_SELECT,
+    E_DELETE,
+    E_ADD,
+    E_UPDATE
 };
 
 enum FactorType {
-    CONSTANT,
-    EXPRESSION
+    E_CONSTANT,
+    E_EXPRESSION
 };
 
 /**

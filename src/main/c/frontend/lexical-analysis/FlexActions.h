@@ -43,5 +43,3 @@ Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
 Token IdentifierLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
 
 #endif
-
-#endif

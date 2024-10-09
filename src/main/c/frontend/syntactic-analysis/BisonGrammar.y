@@ -219,14 +219,14 @@ update_items:
 where_object:
             condition[cond]                                { $$ = $cond; }
             | condition[cond] logical_op[log_op] where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, $log_op, $where_obj); }
-            | NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, NOT, $where_obj); }
+            | NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
 
             ;
 
 having_object:
             having_condition[hav_con]                                { $$ = $hav_con; }
             | having_condition[hav_con] logical_op[log_op] having_object[hav_obj]     { $$ = HavingObjectSemanticAction($hav_con, $log_op, $hav_obj); }
-            | NOT having_object[hav_obj]                            { $$ = HavingObjectSemanticAction(NULL, NOT, $hav_obj); }
+            | NOT having_object[hav_obj]                            { $$ = HavingObjectSemanticAction(NULL, E_NOT, $hav_obj); }
             ;
 
 having_condition: 
@@ -235,23 +235,23 @@ having_condition:
             ;
 
 condition:
-            STRING[str] operator value[val]                      { $$ = ConditionSemanticAction($str, EQUALS, $val); }
+            STRING[str] operator value[val]                      { $$ = ConditionSemanticAction($str, E_EQUALS, $val); }
         
             ;
 
 aggregate_function:
-                COUNT   { $$ = $1; }
-                | SUM   { $$ = $1; }
-                | AVG   { $$ = $1; }
-                | MAX   { $$ = $1; }
-                | MIN   { $$ = $1; }
+                COUNT   { $$ = E_COUNT; }
+                | SUM   { $$ = E_SUM; }
+                | AVG   { $$ = E_AVG; }
+                | MAX   { $$ = E_MAX; }
+                | MIN   { $$ = E_MIN; }
                 ;   
 
 
 operator: 
-                EQUALS             {$$ = $1; }
-                | GREATER_THAN     {$$ = $1; }
-                | LESS_THAN        {$$ = $1; }
+                EQUALS             {$$ = E_EQUALS; }
+                | GREATER_THAN     {$$ = E_GREATER_THAN; }
+                | LESS_THAN        {$$ = E_LESS_THAN; }
                 ;
 
 value:
