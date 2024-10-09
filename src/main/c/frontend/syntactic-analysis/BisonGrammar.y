@@ -37,6 +37,7 @@
     Function * function;
     AggFunc* aggregate_function;
     Operator* operator;
+    LogOp* logical_op
 }
 
 
@@ -112,6 +113,7 @@
 %type <function> function
 %type <operator> operator
 %type <aggregate_function> aggregate_function
+%type <logical_op> logical_op
 
 
 
@@ -157,93 +159,100 @@ create_action:
 select_action:
 				LBRACE
                 SELECT COLON LBRACE
-                COLUMNS COLON column_list COMMA
+                COLUMNS COLON column_list[col_list] COMMA
                 FROM COLON STRING COMMA
-                WHERE COLON where_object COMMA
-                GROUP_BY COLON column_list COMMA
-                HAVING COLON having_object
+                WHERE COLON where_object[where_obj] COMMA
+                GROUP_BY COLON column_list[col_list] COMMA
+                HAVING COLON having_object[hav_obj]
                 RBRACE
-                RBRACE                              { $$ = SelectActionSemanticAction($7, $11, $15, $19, $23); }
+                RBRACE                              { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $col_list, $hav_obj); }
                 ;
 
 delete_action:
 				LBRACE
 				DELETE COLON LBRACE
 				FROM COLON STRING COMMA
-				WHERE COLON where_object
+				WHERE COLON where_object[where_obj]
 				RBRACE
-				RBRACE                              { $$ = DeleteActionSemanticAction($7, $11); }
+				RBRACE                              { $$ = DeleteActionSemanticAction($7, $where_obj); }
 				;
 
 add_action:
 				LBRACE
 				ADD COLON LBRACE
 				TABLE COLON STRING COMMA
-				VALUES COLON array
+				VALUES COLON array[arr]
 				RBRACE
-				RBRACE                              { $$ = AddActionSemanticAction($7, $11); }
+				RBRACE                              { $$ = AddActionSemanticAction($7, $arr); }
 				;
 
 update_action:
                 LBRACE
                 UPDATE COLON LBRACE
                 TABLE COLON STRING COMMA
-                SET COLON update_list COMMA
-                WHERE COLON where_object
+                SET COLON update_list[upd_list] COMMA
+                WHERE COLON where_object[where_obj]
                 RBRACE
-                RBRACE                              { $$ = UpdateActionSemanticAction($7, $11, $15); }
+                RBRACE                              { $$ = UpdateActionSemanticAction($7, $upd_list, $where_obj); }
                 ;
 
 
 column_object:
-                LBRACE column_list RBRACE       { $$ = $2; }
+                LBRACE column_list[col_list] RBRACE       { $$ = $col_list; }
                 ;
 
 column_list:
-                STRING COLON STRING                      { $$ = ColumnDefinitionSemanticAction($1, $3); }
-                | STRING COLON STRING COMMA column_list  { $$ = ColumnListSemanticAction($1, $3, $5); }
+                STRING COLON STRING                      { $$ = ColumnListSemanticAction($1, $3, NULL); }
+                | STRING COLON STRING COMMA column_list[col_list]  { $$ = ColumnListSemanticAction($1, $3, $col_list); }
                 ;
 
 column_value:
 				STRING COLON LBRACE
 				TYPE COLON STRING COMMA
 				NAME COLON STRING
-				RBRACE                              { $$ = ColumnValueSemanticAction($6, $8); }
+				RBRACE                              { $$ = ColumnValueSemanticAction($6, $8, NULL); }
 				| STRING COLON LBRACE
 				TYPE COLON STRING COMMA
 				NAME COLON STRING
-				RBRACE COMMA column_value           { $$ = ColumnValueListSemanticAction($6, $8, $12); }
+				RBRACE COMMA column_value[col_val]           { $$ = ColumnValueSemanticAction($6, $8, $col_val); }
 				;
 
 update_list:
-                LBRACE update_items RBRACE      { $$ = $2; }
+                LBRACE update_items[upd_itmes] RBRACE      { $$ = $upd_itmes; }
                 ;
 
 update_items:
-                STRING COLON value                       { $$ = UpdateItemSemanticAction($1, $3); }
-                | STRING COLON value COMMA update_items  { $$ = UpdateItemListSemanticAction($1, $3, $5); }
+                STRING COLON value[val]                                  { $$ = UpdateItemSemanticAction($1, $val, NULL); }
+                | STRING COLON value[val] COMMA update_items[upd_itmes]  { $$ = UpdateItemSemanticAction($1, $val, $upd_itmes); }
                 ;
 
 
 string_list:
-				STRING                                   { $$ = ColumnListSemanticAction($1, 1); }
-				| STRING COMMA string_list               { $$ = ColumnListAppendSemanticAction($1, $3); }
+				STRING                                             { $$ = ColumnListSemanticAction($1, 1); }
+				| STRING COMMA string_list[str_list]               { $$ = ColumnListAppendSemanticAction($1, $str_list); }
 				;
 
 where_object:
-            condition                                { $$ = $1; }
-            | condition logical_op where_object      { $$ = LogicalConditionSemanticAction($1, $2, $3); }
+            condition[cond]                                { $$ = $cond; }
+            | condition logical_op[log_op] where_object[where_obj]     { $$ = WhereObjectSemanticAction($1, $log_op, $where_obj); }
+            | NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, NOT, $where_obj); }
+
             ;
 
 having_object:
-            condition                                { $$ = $1; }
-            | condition logical_op having_object     { $$ = LogicalConditionSemanticAction($1, $2, $3); }
+            having_condition[hav_con]                                { $$ = $hav_con; }
+            | having_condition[hav_con] logical_op[log_op] having_object[hav_obj]     { $$ = HavingObjectSemanticAction($hav_con, $log_op, $hav_obj); }
+            | NOT having_object                            { $$ = HavingObjectSemanticAction($1, $2, $3); }
+            ;
+
+having_condition: 
+            aggregate_function PARENTHESIS_OPEN STRING PARENTHESIS_CLOSE operator value
+                                                    { $$ = AggregateConditionSemanticAction($1, $3, $5, $6); }
             ;
 
 condition:
             STRING operator value                      { $$ = ConditionSemanticAction($1, EQUALS, $3); }
-            | aggregate_function PARENTHESIS_OPEN STRING PARENTHESIS_CLOSE operatot value
-                                                    { $$ = AggregateConditionSemanticAction($1, $3, $5, $6); }
+        
             ;
 
 aggregate_function:
@@ -268,5 +277,8 @@ value_list:
 				value                                    { $$ = ValueListSemanticAction($1, 1); }
 				| value COMMA value_list                 { $$ = ValueListAppendSemanticAction($1, $3); }
 				;
+                
+logical_op: AND 
+                |OR
 
 %%

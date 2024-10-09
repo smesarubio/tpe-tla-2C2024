@@ -30,63 +30,13 @@ static void _logSyntacticAnalyzerAction(const char * functionName) {
 }
 
 /* PUBLIC FUNCTIONS */
-
+/*
 Constant * IntegerConstantSemanticAction(const int value) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Constant * constant = calloc(1, sizeof(Constant));
 	constant->value = value;
 	return constant;
-}
-
-Expression * ArithmeticExpressionSemanticAction(Expression * leftExpression, Expression * rightExpression, ExpressionType type) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Expression * expression = calloc(1, sizeof(Expression));
-	expression->leftExpression = leftExpression;
-	expression->rightExpression = rightExpression;
-	expression->type = type;
-	return expression;
-}
-
-Expression * FactorExpressionSemanticAction(Factor * factor) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Expression * expression = calloc(1, sizeof(Expression));
-	expression->factor = factor;
-	expression->type = FACTOR;
-	return expression;
-}
-
-Factor * ConstantFactorSemanticAction(Constant * constant) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Factor * factor = calloc(1, sizeof(Factor));
-	factor->constant = constant;
-	factor->type = CONSTANT;
-	return factor;
-}
-
-Factor * ExpressionFactorSemanticAction(Expression * expression) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Factor * factor = calloc(1, sizeof(Factor));
-	factor->expression = expression;
-	factor->type = EXPRESSION;
-	return factor;
-}
-
-Program * ExpressionProgramSemanticAction(CompilerState * compilerState, Expression * expression) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Program * program = calloc(1, sizeof(Program));
-	program->expression = expression;
-	compilerState->abstractSyntaxtTree = program;
-	if (0 < flexCurrentContext()) {
-		logError(_logger, "The final context is not the default (0): %d", flexCurrentContext());
-		compilerState->succeed = false;
-	}
-	else {
-		compilerState->succeed = true;
-	}
-	return program;
-}
-
-
+}*/
 
 static Logger * _logger = NULL;
 
@@ -162,3 +112,58 @@ Action * DeleteActionSemanticAction(String* table_name, WhereObject* where_objec
 	return newAction;
 }
 
+Action* SelectActionSemanticAction(ColumnList* table_column_list, String* table_name, WhereObject* where_object, ColumnList* groupby_column_list,HavingObject* having_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Action* newAction = calloc(1, sizeof(Action));
+	SelectAction* newSelectAction = calloc(1, sizeof(SelectAction));
+
+	newSelectAction->group_by_column_list = groupby_column_list;
+	newSelectAction->having_object = having_object;
+	newSelectAction->table_column_list = table_column_list;
+	newSelectAction->table_name = table_name;
+	newSelectAction->where_objects = where_object;
+	newAction->actions.select_action = newSelectAction;
+	return newAction;
+}
+
+
+ColumnList * ColumnListSemanticAction(String* left, String* right, ColumnList* column_list){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	ColumnList * newColumnList = calloc(1, sizeof(ColumnList));
+	if (column_list == NULL)
+	{
+		newColumnList->u.first.left = left;
+		newColumnList->u.first.right = right;
+		return newColumnList;
+	}else{
+		newColumnList->u.second.left = left;
+		newColumnList->u.second.right = right;
+		newColumnList->u.second.column_list = column_list;
+		return newColumnList;
+	}
+}
+
+
+UpdateItems * UpdateItemSemanticAction(String * string, Value * value, UpdateItems * updateItems ){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	UpdateItems * newUpdateList = calloc(1, sizeof(UpdateItems));
+	if(updateItems != NULL){
+		newUpdateList->update_items_union.first.string = string;
+		newUpdateList->update_items_union.first.value = value;
+		return newUpdateList;
+	}else{
+		newUpdateList->update_items_union.second.string = string;
+		newUpdateList->update_items_union.second.value = value;
+		newUpdateList->update_items_union.second.update_items = updateItems;
+		return newUpdateList;
+	}
+}
+
+WhereObject * WhereObjectSemanticAction(Condition * condition, ){
+
+}
+
+
+HavingObject * HavingObjectSemanticAction(AggFunc * func, String * string, ,Value * value){
+
+}

@@ -26,36 +26,6 @@ typedef struct Program Program;
  * Node types for the Abstract Syntax Tree (AST).
  */
 
-
-/*
-	char* string;
-	int integer;
-	float float_value;
-	Token token;
-
-	JsonQuery * json_query;
-    Action * action;
-    CreateAction * create_action;
-    DeleteAction * delete_action;
-    SelectAction * select_action;
-    AddAction * add_action;
-    UpdateAction * update_action;
-    ColumnObject * column_object;
-    ColumnList * column_list;
-    ColumnValue * column_value;
-    UpdateList * update_list;
-    UpdateItems * update_items;
-    StringList * string_list;
-    WhereObject * where_object;
-    HavingObject * having_object;
-    Condition * condition;
-    Value * value;
-    Array * array;
-    ValueList * value_list;     
-    Function * function;
-
-*/
-
 typedef struct JsonQuery {
     union {
         Action* action;
@@ -66,75 +36,62 @@ typedef struct JsonQuery {
     } query;
 } JsonQuery;
 
-
 typedef struct Action {
-	union {
-		CreateAction* create_action;
-		DeleteAction* delete_action;
-		SelectAction* select_action;
-		AddAction* add_action;
-		UpdateAction* update_action;
-	}actions;
-} Action ;
-
+    union {
+        CreateAction* create_action;
+        DeleteAction* delete_action;
+        SelectAction* select_action;
+        AddAction* add_action;
+        UpdateAction* update_action;
+    } actions;
+} Action;
 
 typedef struct CreateAction {
-	String* table_name;
-	ColumnObject* column_object;
+    String* table_name;
+    ColumnObject* column_object;
 } CreateAction;
-
 
 typedef struct DeleteAction {
     String* table_name; 
-	WhereObject* where_object;
+    WhereObject* where_object;
 } DeleteAction;
 
-
 typedef struct SelectAction {
-    
-	ColumnList * table_column_list;
-	String * table_name;
-	WhereObject * where_objects;
-	ColumnList * group_by_column_list;
-	HavingObject *  having_object;
-	
+    ColumnList* table_column_list;
+    String* table_name;
+    WhereObject* where_objects;
+    ColumnList* group_by_column_list;
+    HavingObject* having_object;
 } SelectAction;
-
 
 typedef struct AddAction {
     String* table_name;
-	Array* array; 
+    Array* array; 
 } AddAction;
 
-
 typedef struct UpdateAction {
-	String* table_name;
-	UpdateList* update_list;
-	WhereObject* where_object;
+    String* table_name;
+    UpdateList* update_list;
+    WhereObject* where_object;
 } UpdateAction;
-
 
 typedef struct ColumnObject {
     ColumnList* column_list;
-
 } ColumnObject;
 
-
 typedef struct ColumnList {
-	union ColumnListUnion {
-		
-		struct clist_first {
-			String* left;
-			String* right;
-		};
-		struct clist_second {
-			String* left;
-			String* right;
-			ColumnList* column_list;
-		};
-	};
+    union {
+        struct {
+            String* left;
+            String* right;
+        } first;
+        struct {
+            String* left;
+            String* right;
+            struct ColumnList* column_list;
+        } second;
+    } u;
 } ColumnList;
-
 
 typedef struct ColumnValue {
     // Definir los campos aquí
@@ -144,212 +101,164 @@ typedef struct UpdateList {
     UpdateItems* update_items;
 } UpdateList;
 
-
 typedef struct UpdateItems {
-    union UpdateItemsUnion {
-		struct clist_first {
-			String* string;
-			Value* value;
-		};
-		struct clist_second {
-			String* string;
-			Value* value;
-			UpdateItems* update_items;
-		};
-	};
+    union {
+        struct {
+            String* string;
+            Value* value;
+        } first;
+        struct {
+            String* string;
+            Value* value;
+            UpdateItems* update_items;
+        } second;
+    } update_items_union;
 } UpdateItems;
 
-
 typedef struct StringList {
-    union StringListUnion {
-		struct clist_first {
-			String* string;
-		};
-		struct clist_second {
-			String* string;
-			StringList* string_list;
-		};
-	};
+    union {
+        struct {
+            String* string;
+        } first;
+        struct {
+            String* string;
+            StringList* string_list;
+        } second;
+    } string_list_union;
 } StringList;
 
-
 typedef struct WhereObject {
-    union whereObjectUnion{
-		struct clist_first {
-			Condition* condition;
-		};
-		struct clist_second {
-			Condition* condition;
-			LogOp* log_op;
-			WhereObject* where_object;
-		};
-	};
+    union {
+        struct {
+            Condition* condition;
+        } first;
+        struct {
+            Condition* condition;
+            LogOp* log_op;
+            WhereObject* where_object;
+        } second;
+    } where_object_union;
 } WhereObject;
 
-
 typedef struct HavingObject {
-    union havingObjectUnion{
-		struct clist_first {
-			Condition* condition;
-		};
-		struct clist_second {
-			Condition* condition;
-			LogOp* log_op;
-			HavingObject* having_object;
-		};
-	};
+    union {
+        struct {
+            Condition* condition;
+        } first;
+        struct {
+            Condition* condition;
+            LogOp* log_op;
+            HavingObject* having_object;
+        } second;
+    } having_object_union;
 } HavingObject;
 
-
 typedef struct Condition {
-    union ConditionUnion{
-		struct cond_first {
-			String* string;
-			Operator* operator;
-			Value* value;
-		};
-		struct cond_second {
-			String* string;
-			Value* value;
-			AggFunc* agregate_function;
-		};
-	};
+    union {
+        struct {
+            String* string;
+            Operator* operator;
+            Value* value;
+        } first;
+        struct {
+            String* string;
+            Value* value;
+            AggFunc* aggregate_function;
+        } second;
+    } condition_union;
 } Condition;
 
-
 typedef struct Value {
-	union Values
-	{
-		String * string;
-		Integer * integer;
-		Float * float_value
-	};
+    union {
+        String* string;
+        Integer* integer;
+        Float* float_value;
+    } values;
 } Value;
 
-
 typedef struct Array {
-	ValueList * value_list;	
+    ValueList* value_list;    
 } Array;
 
-
 typedef struct ValueList {
-    union ValueListUnion{
-		struct clist_first {
-			Value* value;
-		};
-		struct clist_second {
-			Value* value;
-			ValueList* value_list;
-		};
-	};
+    union {
+        struct {
+            Value* value;
+        } first;
+        struct {
+            Value* value;
+            ValueList* value_list;
+        } second;
+    } value_list_union;
 } ValueList;
-
 
 typedef struct Function {
     // Definir los campos aquí
 } Function;
 
-
 typedef struct String {
-	char * value;
+    char* value;
 } String;
 
-
 typedef struct Integer {
-	int value;
+    int value;
 } Integer;
 
-
 typedef struct Float {
-	float value;
+    float value;
 } Float;
 
-
 typedef struct LogOp {
-	LogOpType log_op_value;
+    LogOpType log_op_value;
 } LogOp;
 
-typedef struct AggFunc{
-	AggFuncType agg_func_value
-}AggFunc;
+typedef struct AggFunc {
+    AggFuncType agg_func_value;
+} AggFunc;
 
-typedef struct Operator{
-	OperatorType operator_type;
-}Operator;
+typedef struct Operator {
+    OperatorType operator_type;
+} Operator;
 
-typedef enum OperatorType{
-	EQUALS,
-	GREATER_THAN,
-	LESS_THAN
-}OperatorType;
+typedef enum OperatorType {
+    EQUALS,
+    GREATER_THAN,
+    LESS_THAN
+} OperatorType;
 
 typedef enum LogOpType {
-	NOT,
-	AND,
-	OR
-}LogOpType;
+    NOT,
+    AND,
+    OR
+} LogOpType;
 
-typedef enum AggFuncType{
-	COUNT,
-	SUM,
-	AVG,
-	MAX,
-	MIN
-}AggFuncType;
-
-
+typedef enum AggFuncType {
+    COUNT,
+    SUM,
+    AVG,
+    MAX,
+    MIN
+} AggFuncType;
 
 enum ActionType {
-	CREATE,
-	SELECT,
-	DELETE,
-	ADD,
-	UPDATE
+    CREATE,
+    SELECT,
+    DELETE,
+    ADD,
+    UPDATE
 };
 
 enum FactorType {
-	CONSTANT,
-	EXPRESSION
+    CONSTANT,
+    EXPRESSION
 };
-
-
-
-// struct Constant {
-// 	int value;
-// };
-
-// struct Factor {
-// 	union {
-// 		Constant * constant;
-// 		Expression * expression;
-// 	};
-// 	FactorType type;
-// };
-
-// struct Expression {
-// 	union {
-// 		Factor * factor;
-// 		struct {
-// 			Expression * leftExpression;
-// 			Expression * rightExpression;
-// 		};
-// 	};
-// 	ExpressionType type;
-// };
-
-// struct Program {
-// 	Expression * expression;
-// };
-
-
 
 /**
  * Node recursive destructors.
  */
-void releaseConstant(Constant * constant);
-void releaseExpression(Expression * expression);
-void releaseFactor(Factor * factor);
-void releaseProgram(Program * program);
-
+void releaseConstant(Constant* constant);
+void releaseExpression(Expression* expression);
+void releaseFactor(Factor* factor);
+void releaseProgram(Program* program);
 
 #endif
