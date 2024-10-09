@@ -1,4 +1,5 @@
 #include "BisonActions.h"
+
 /* MODULE INTERNAL STATE */
 
 static Logger * _logger = NULL;
@@ -103,51 +104,61 @@ static void _logSyntacticAnalyzerAction(const char * functionName) {
     logDebugging(_logger, "%s", functionName);
 }
 
-Action* CreateTableActionSemanticAction(char* tableName, Column* columns, int columnCount) {
+
+
+JsonQuery * JsonQuerySemanticAction(Action * action, JsonQuery * jsonQuery){
     _logSyntacticAnalyzerAction(__FUNCTION__);
-    Action* action = calloc(1, sizeof(Action));
-    action->type = CREATE_ACTION;
-    action->action.create.tableName = strdup(tableName);
-    action->action.create.columns = columns;
-    action->action.create.columnCount = columnCount;
-    return action;
+    JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
+    
+	newQuery->query.node.action= action;
+	newQuery->query.node.json_query = jsonQuery;
+	return newQuery;
+
 }
 
-Action* SelectActionSemanticAction(char** columns, int columnCount, char* tableName, Condition* where) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    Action* action = calloc(1, sizeof(Action));
-    action->type = SELECT_ACTION;
-    action->action.select.columns = columns;
-    action->action.select.columnCount = columnCount;
-    action->action.select.tableName = strdup(tableName);
-    action->action.select.where = where;
-    return action;
+
+Action * CreateActionSemanticAction(String* table_name, ColumnObject* col_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Action *newAction = calloc(1, sizeof(Action));
+	CreateAction *newCreateAction = calloc(1, sizeof(CreateAction));
+
+	newCreateAction->table_name = table_name;
+	newCreateAction->column_object = col_object;
+	newAction->actions.create_action = newCreateAction;
+	return newAction;
 }
 
-Action* DeleteActionSemanticAction(char* tableName, Condition* where) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    Action* action = calloc(1, sizeof(Action));
-    action->type = DELETE_ACTION;
-    action->action.delete.tableName = strdup(tableName);
-    action->action.delete.where = where;
-    return action;
+Action * UpdateActionSemanticAction(String* table_name, UpdateList* update_list, WhereObject* where_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Action *newAction = calloc(1, sizeof(Action));
+	UpdateAction *newUpdateAction = calloc(1, sizeof(UpdateAction));
+
+	newUpdateAction->table_name = table_name;
+	newUpdateAction->update_list = update_list;
+	newUpdateAction->where_object = where_object;
+	newAction->actions.update_action = newUpdateAction;
+	return newAction;
 }
 
-Action* AddActionSemanticAction(char* tableName, Value* values, int valueCount) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    Action* action = calloc(1, sizeof(Action));
-    action->type = ADD_ACTION;
-    action->action.add.tableName = strdup(tableName);
-    action->action.add.values = values;
-    action->action.add.valueCount = valueCount;
-    return action;
+Action * AddActionSemanticAction(String* table_name, Array* array){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Action *newAction = calloc(1, sizeof(Action));
+	AddAction *newAddAction = calloc(1, sizeof(AddAction));
+
+	newAddAction->table_name = table_name;
+	newAddAction->array = array;
+	newAction->actions.add_action = newAddAction;
+	return newAction;
 }
 
-Program* ProgramSemanticAction(CompilerState* compilerState, Action* action) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    Program* program = calloc(1, sizeof(Program));
-    program->action = action;
-    compilerState->abstractSyntaxtTree = program;
-    compilerState->succeed = true;
-    return program;
+Action * DeleteActionSemanticAction(String* table_name, WhereObject* where_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Action *newAction  = calloc(1, sizeof(Action));
+	DeleteAction *newDeleteAction = calloc(1, sizeof(DeleteAction));
+
+	newDeleteAction->table_name = table_name;
+	newDeleteAction->where_object = where_object;
+	newAction->actions.delete_action = newDeleteAction;
+	return newAction;
 }
+

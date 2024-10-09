@@ -29,12 +29,14 @@
     UpdateItems * update_items;
     StringList * string_list;
     WhereObject * where_object;
-    HavingOvject * having_object;
+    HavingObject * having_object;
     Condition * condition;
     Value * value;
     Array * array;
     ValueList * value_list;     
-    
+    Function * function;
+    AggFunc* aggregate_function;
+    Operator* operator;
 }
 
 
@@ -88,20 +90,31 @@
 %token <token> MIN
 
 /** Non-terminals. */
-%type <object> json_query
-%type <object> object
-%type <object> content
-%type <object> action_object
-%type <object> column_object
-%type <object> column_value
-%type <list> column_list
-%type <object> where_object
-%type <object> condition
-%type <string> table_name
+%type <json_query> json_query
+%type <action> action
+%type <create_action> create_action
+%type <delete_action> delete_action
+%type <select_action> select_action
+%type <add_action> add_action
+%type <update_action> update_action
+%type <column_object> column_object
+%type <column_list> column_list
+%type <column_value> column_value
+%type <update_list> update_list
+%type <update_items> update_items
+%type <string_list> string_list
+%type <where_object> where_object
+%type <having_object> having_object
+%type <condition> condition
 %type <value> value
-%type <list> array
-%type <token> LOGICAL_OP
-%type <token> OPERATOR
+%type <array> array
+%type <value_list> value_list
+%type <function> function
+%type <operator> operator
+%type <aggregate_function> aggregate_function
+
+
+
 
 /**
  * Precedence and associativity.
@@ -113,15 +126,17 @@
 %left EQUALS GREATER_THAN LESS_THAN
 %left ADD SUB
 %left MUL DIV
+
+//nuestro simbolo inicial
+
+%start json_query
+
 %%
 
-program:json_query                           { $$ = ProgramSemanticAction(currentCompilerState(), $1); }
-				;
 
-/**Que va a la derecha?*/
 
-json_query: action
-                |LBRACE action COMMA action RBRACE
+json_query:     action[act]                                 { $$ = JsonQuerySemanticAction((Action) $act, NULL)}
+                |LBRACE action COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction((Action) $act, $query)}
 
 action:     create_action                                { $$ = $1; }
 				| select_action                          { $$ = $1; }
@@ -134,9 +149,9 @@ create_action:
                 LBRACE
                 CREATE COLON LBRACE
                 TABLE COLON STRING COMMA
-                COLUMNS COLON column_object
+                COLUMNS COLON column_object[col_obj]
                 RBRACE
-                RBRACE                              { $$ = CreateActionSemanticAction($7, $11); }
+                RBRACE                              { $$ = CreateActionSemanticAction($7, $col_obj); }
                 ;
 
 select_action:
@@ -217,25 +232,28 @@ string_list:
 
 where_object:
             condition                                { $$ = $1; }
-            | condition LOGICAL_OP where_object      { $$ = LogicalConditionSemanticAction($1, $2, $3); }
+            | condition logical_op where_object      { $$ = LogicalConditionSemanticAction($1, $2, $3); }
             ;
 
 having_object:
             condition                                { $$ = $1; }
-            | condition LOGICAL_OP having_object     { $$ = LogicalConditionSemanticAction($1, $2, $3); }
+            | condition logical_op having_object     { $$ = LogicalConditionSemanticAction($1, $2, $3); }
             ;
 
 condition:
-            STRING EQUALS value                      { $$ = ConditionSemanticAction($1, EQUALS, $3); }
-            | STRING GREATER_THAN value              { $$ = ConditionSemanticAction($1, GREATER_THAN, $3); }
-            | STRING LESS_THAN value                 { $$ = ConditionSemanticAction($1, LESS_THAN, $3); }
-            | AGGREGATE_FUNCTION PARENTHESIS_OPEN STRING PARENTHESIS_CLOSE OPERATOR value
+            STRING operator value                      { $$ = ConditionSemanticAction($1, EQUALS, $3); }
+            | aggregate_function PARENTHESIS_OPEN STRING PARENTHESIS_CLOSE operatot value
                                                     { $$ = AggregateConditionSemanticAction($1, $3, $5, $6); }
             ;
 
-            AGGREGATE_FUNCTION:
+aggregate_function:
                 COUNT | SUM | AVG | MAX | MIN            { $$ = $1; }
                 ;
+
+
+operator: 
+                EQUALS | GREATER_THAN | LESS_THAN        {$$ = $1; }
+
 value:
             STRING                                   { $$ = StringValueSemanticAction($1); }
             | INTEGER                                { $$ = IntegerValueSemanticAction($1); }
