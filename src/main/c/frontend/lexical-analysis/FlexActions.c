@@ -72,10 +72,11 @@ Token ParenthesisLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, T
 	return token;
 }
 
+/*
 Token UnknownLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
 	return UNKNOWN;
-}
+}*/
 
 
 
@@ -117,25 +118,35 @@ Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     return STRING;
 }
 
+/*
+
+"true"                      { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
+"false"                     { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
+
 Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
     lexicalAnalyzerContext->semanticValue->boolean = (strcmp(lexicalAnalyzerContext->lexeme, "true") == 0);
     return BOOL;
 }
-
+*/
 Token NullLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-    return NUL;
+    return NULL;
 }
 
 Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-    lexicalAnalyzerContext->semanticValue->floating = atof(lexicalAnalyzerContext->lexeme);
+    lexicalAnalyzerContext->semanticValue->float_value = atof(lexicalAnalyzerContext->lexeme);
     return FLOAT;
 }
+/*
+Esto estaba en el .l
+[a-zA-Z_][a-zA-Z0-9_]*      { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
 
+y esto aca
 Token IdentifierLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
     lexicalAnalyzerContext->semanticValue->string = strdup(lexicalAnalyzerContext->lexeme);
     return IDENTIFIER;
 }
+*/

@@ -35,15 +35,12 @@
 "MIN"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MIN); }
 
 
-"true"                      { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
-"false"                     { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
 "null"                      { return NullLexemeAction(createLexicalAnalyzerContext()); }
 
 \"(\\.|[^"\\])*\"           { return StringLexemeAction(createLexicalAnalyzerContext());}
 [[:digit:]]+				{ return IntegerLexemeAction(createLexicalAnalyzerContext());}
 [0-9]+"."[0-9]+             { return FloatLexemeAction(createLexicalAnalyzerContext()); }
 
-[a-zA-Z_][a-zA-Z0-9_]*      { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
 
 .                           { return yytext[0]; }
 
