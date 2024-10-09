@@ -137,6 +137,10 @@ typedef struct WhereObject {
             LogOp* log_op;
             WhereObject* where_object;
         } second;
+        struct {
+            LogOp* log_op;
+            WhereObject* where_object;
+        }third;
     } where_object_union;
 } WhereObject;
 
@@ -150,22 +154,23 @@ typedef struct HavingObject {
             LogOp* log_op;
             HavingObject* having_object;
         } second;
+        struct {
+            LogOp* log_op;
+            HavingObject* having_object;
+        }third;
     } having_object_union;
 } HavingObject;
 
+typedef struct HavingCondition{
+    AggFunc* aggregate_func;
+    Operator* operator;
+    Value* value;
+}HavingCondition;
+
 typedef struct Condition {
-    union {
-        struct {
-            String* string;
-            Operator* operator;
-            Value* value;
-        } first;
-        struct {
-            String* string;
-            Value* value;
-            AggFunc* aggregate_function;
-        } second;
-    } condition_union;
+    String* string;
+    Operator* operator;
+    Value* value;
 } Condition;
 
 typedef struct Value {

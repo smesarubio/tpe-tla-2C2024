@@ -16,7 +16,8 @@ void shutdownBisonActionsModule() {
 
 /** IMPORTED FUNCTIONS */
 
-extern unsigned int flexCurrentContext(void);
+extern unsigned int flexCurrentContext
+(void);
 
 /* PRIVATE FUNCTIONS */
 
@@ -159,11 +160,88 @@ UpdateItems * UpdateItemSemanticAction(String * string, Value * value, UpdateIte
 	}
 }
 
-WhereObject * WhereObjectSemanticAction(Condition * condition, ){
+WhereObject * WhereObjectSemanticAction(Condition * condition, LogOp* logical_op, WhereObject* where_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	WhereObject* newWhereObject = calloc(1, sizeof(WhereObject));
 
+	if(condition != NULL){
+		newWhereObject->where_object_union.second.condition = condition;
+		newWhereObject->where_object_union.second.log_op = logical_op;
+		newWhereObject->where_object_union.second.where_object = where_object;
+	}else{
+		newWhereObject->where_object_union.third.log_op = logical_op;
+		newWhereObject->where_object_union.third.where_object = where_object;
+	}
+	return newWhereObject;
 }
 
 
-HavingObject * HavingObjectSemanticAction(AggFunc * func, String * string, ,Value * value){
+HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, LogOp* logical_op, HavingObject* having_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	HavingObject * newHavingObject = calloc(1, sizeof(HavingObject));
 
+	if(having_condition == NULL){
+		newHavingObject->having_object_union.third.log_op = logical_op;
+		newHavingObject->having_object_union.third.having_object = having_object;
+		return newHavingObject;
+	}else{
+		newHavingObject->having_object_union.second.condition = having_condition;
+		newHavingObject->having_object_union.second.having_object = having_object;
+		newHavingObject->having_object_union.second.log_op = logical_op;
+		return newHavingObject;
+	}
 }
+
+Condition * ConditionSemanticAction(String* string, Operator* operator, Value* value){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Condition * newCondition = calloc(1, sizeof(Condition));
+	newCondition->string = string;
+	newCondition->operator = operator;
+	newCondition->value = value;
+	return newCondition;
+}
+
+Value * StringValueSemanticAction(String* string){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Value * newValue = calloc(1, sizeof(Value));
+	newValue->values.string = string;
+	return newValue;
+}
+
+Value * IntegerValueSemanticAction(Integer* integer){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Value * newValue = calloc(1, sizeof(Value));
+	newValue->values.integer = integer;
+	return newValue;
+}
+
+Value * FloatValueSemanticAction(Float* float_value){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Value * newValue = calloc(1, sizeof(Value));
+	newValue->values.float_value = float_value;
+	return newValue;
+}
+
+ValueList * ValueListSemanticAction(Value* value, ValueList* value_list){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	ValueList * newValueList = calloc(1, sizeof(ValueList));
+	if(value_list == NULL){
+		newValueList->value_list_union.first.value = value;
+		return newValueList;
+	}else{
+		newValueList->value_list_union.second.value = value;
+		newValueList->value_list_union.second.value_list = value_list;
+		return newValueList;
+	}
+}
+
+HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String* string, Operator* operator, Value* value){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	HavingCondition* newHavingCondition = calloc(1, sizeof(HavingCondition));
+
+	newHavingCondition->aggregate_func = agg_func;
+	newHavingCondition->operator = operator;
+	newHavingCondition->value = value;
+	return newHavingCondition;
+}
+

@@ -212,9 +212,9 @@ column_value:
 				NAME COLON STRING
 				RBRACE                              { $$ = ColumnValueSemanticAction($6, $8, NULL); }
 				| STRING COLON LBRACE
-				TYPE COLON STRING COMMA
+				TYPE COLON STRING[str] COMMA
 				NAME COLON STRING
-				RBRACE COMMA column_value[col_val]           { $$ = ColumnValueSemanticAction($6, $8, $col_val); }
+				RBRACE COMMA column_value[col_val]           { $$ = ColumnValueSemanticAction($str, $8, $col_val); }
 				;
 
 update_list:
@@ -234,7 +234,7 @@ string_list:
 
 where_object:
             condition[cond]                                { $$ = $cond; }
-            | condition logical_op[log_op] where_object[where_obj]     { $$ = WhereObjectSemanticAction($1, $log_op, $where_obj); }
+            | condition[cond] logical_op[log_op] where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, $log_op, $where_obj); }
             | NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, NOT, $where_obj); }
 
             ;
@@ -242,16 +242,16 @@ where_object:
 having_object:
             having_condition[hav_con]                                { $$ = $hav_con; }
             | having_condition[hav_con] logical_op[log_op] having_object[hav_obj]     { $$ = HavingObjectSemanticAction($hav_con, $log_op, $hav_obj); }
-            | NOT having_object                            { $$ = HavingObjectSemanticAction($1, $2, $3); }
+            | NOT having_object                            { $$ = HavingObjectSemanticAction(NULL, NOT, $3); }
             ;
 
 having_condition: 
-            aggregate_function PARENTHESIS_OPEN STRING PARENTHESIS_CLOSE operator value
-                                                    { $$ = AggregateConditionSemanticAction($1, $3, $5, $6); }
+            aggregate_function[agg_func] PARENTHESIS_OPEN STRING[str] PARENTHESIS_CLOSE operator[op] value[value]
+                                                    { $$ = HavingConditionSemanticAction($agg_func, $str, $op, $value); }
             ;
 
 condition:
-            STRING operator value                      { $$ = ConditionSemanticAction($1, EQUALS, $3); }
+            STRING[str] operator value[value]                      { $$ = ConditionSemanticAction($str, EQUALS, $value); }
         
             ;
 
@@ -274,11 +274,10 @@ array:
 				;
 
 value_list:
-				value                                    { $$ = ValueListSemanticAction($1, 1); }
+				value                                    { $$ = ValueListSemanticAction($1, NULL); }
 				| value COMMA value_list                 { $$ = ValueListAppendSemanticAction($1, $3); }
 				;
                 
-logical_op: AND 
-                |OR
+logical_op:     AND | OR;          { $$ = $1 }
 
 %%
