@@ -9,8 +9,6 @@
     #include "../../shared/Type.h"
 }
 
-
-
 // You touch this, and you die.
 %define api.value.union.name SemanticValue
 
@@ -210,14 +208,9 @@ column_object:
                 LBRACE column_list[col_list] RBRACE       { $$ = $col_list; }
                 ;
 
-/* column_list:
-                STRING COLON STRING                      { $$ = ColumnListSemanticAction($1, $3, NULL); }
-                | STRING COLON STRING COMMA column_list[col_list]  { $$ = ColumnListSemanticAction($1, $3, $col_list); }
-                ; */
-
 column_list:
                 column_item                             { $$ = ColumnListSemanticAction($1, NULL); }
-                | column_item COMMA column_list         { $$ = ColumnListSemanticAction($1, $3); }
+                | column_list COMMA column_item         { $$ = ColumnListSemanticAction($3, $1); }
                 ;
 
 column_item:
