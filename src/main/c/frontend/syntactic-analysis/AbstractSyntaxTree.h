@@ -23,6 +23,7 @@ typedef struct AddAction AddAction;
 typedef struct UpdateAction UpdateAction;
 typedef struct ColumnObject ColumnObject;
 typedef struct ColumnList ColumnList;
+typedef struct ColumnItem ColumnItem;
 typedef struct ColumnValue ColumnValue;
 typedef struct UpdateList UpdateList;
 typedef struct UpdateItems UpdateItems;
@@ -113,15 +114,18 @@ struct ColumnObject {
 struct ColumnList {
     union {
         struct {
-            String* left;
-            String* right;
-        } first;
+            ColumnItem * column_item;
+        }first;
         struct {
-            String* left;
-            String* right;
-            struct ColumnList* column_list;
-        } second;
-    } u;
+            ColumnItem * column_item;
+            ColumnList * column_list;
+        }second;
+    } columnListUnion;
+};
+
+struct ColumnItem {
+    String* left;
+    String* right;
 };
 
 struct ColumnValue {
@@ -244,6 +248,8 @@ struct AggFunc {
 struct Operator {
     OperatorType* operator_type;
 };
+
+
 
 enum OperatorType {
     E_EQUALS,

@@ -4,6 +4,13 @@
 
 %}
 
+%code requires{
+
+    #include "../../shared/Type.h"
+}
+
+
+
 // You touch this, and you die.
 %define api.value.union.name SemanticValue
 
@@ -24,6 +31,7 @@
     UpdateAction * update_action;
     ColumnObject * column_object;
     ColumnList * column_list;
+    ColumnItem * column_item;
     UpdateList * update_list;
     UpdateItems * update_items;
     WhereObject * where_object;
@@ -105,6 +113,7 @@
 %type <update_action> update_action
 %type <column_object> column_object
 %type <column_list> column_list
+%type <column_item> column_item
 %type <update_list> update_list
 %type <update_items> update_items
 %type <where_object> where_object
@@ -126,6 +135,7 @@
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
 %left OR
+%left COMMA
 %left AND
 %left EQUALS GREATER_THAN LESS_THAN
 
@@ -157,7 +167,7 @@ create_action:
                 ;
 
 select_action:
-				LBRACE
+                LBRACE
                 SELECT COLON LBRACE
                 COLUMNS COLON column_list[col_list] COMMA
                 FROM COLON STRING COMMA
@@ -165,9 +175,8 @@ select_action:
                 GROUP_BY COLON column_list[group_col_list] COMMA
                 HAVING COLON having_object[hav_obj]
                 RBRACE
-                RBRACE                              { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $group_col_list, $hav_obj); }
+                RBRACE { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $group_col_list, $hav_obj); }
                 ;
-
 delete_action:
 				LBRACE
 				DELETE COLON LBRACE
@@ -201,14 +210,23 @@ column_object:
                 LBRACE column_list[col_list] RBRACE       { $$ = $col_list; }
                 ;
 
-column_list:
+/* column_list:
                 STRING COLON STRING                      { $$ = ColumnListSemanticAction($1, $3, NULL); }
                 | STRING COLON STRING COMMA column_list[col_list]  { $$ = ColumnListSemanticAction($1, $3, $col_list); }
+                ; */
+
+column_list:
+                column_item                             { $$ = ColumnListSemanticAction($1, NULL); }
+                | column_item COMMA column_list         { $$ = ColumnListSemanticAction($1, $3); }
+                ;
+
+column_item:
+                STRING COLON STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
                 ;
 
 
 update_list:
-                LBRACE update_items[upd_itmes] RBRACE      { $$ = $upd_itmes; }
+                LBRACE update_items[upd_items] RBRACE      { $$ = $upd_items; }
                 ;
 
 update_items:
@@ -267,7 +285,7 @@ array:
 
 value_list:
 				value                                    { $$ = ValueListSemanticAction($1, NULL); }
-				| value COMMA value_list                 { $$ = ValueListAppendSemanticAction($1, $3); }
+				| value COMMA value_list                 { $$ = ValueListSemanticAction($1, $3); }
 				;
                 
 logical_op:     AND     { $$ = $1 }

@@ -128,20 +128,25 @@ Action* SelectActionSemanticAction(ColumnList* table_column_list, String* table_
 }
 
 
-ColumnList * ColumnListSemanticAction(String* left, String* right, ColumnList* column_list){
+ColumnList * ColumnListSemanticAction(ColumnItem * column_item, ColumnList* column_list){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	ColumnList * newColumnList = calloc(1, sizeof(ColumnList));
-	if (column_list == NULL)
-	{
-		newColumnList->u.first.left = left;
-		newColumnList->u.first.right = right;
+	if(column_list == NULL){
+		newColumnList->columnListUnion.first.column_item = column_item;
 		return newColumnList;
 	}else{
-		newColumnList->u.second.left = left;
-		newColumnList->u.second.right = right;
-		newColumnList->u.second.column_list = column_list;
+		newColumnList->columnListUnion.second.column_item = column_item;
+		newColumnList->columnListUnion.second.column_list = column_list;
 		return newColumnList;
 	}
+}
+
+ColumnItem * ColumnItemSemanticAction(String* left, String * right){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	ColumnItem * newColumnItem = calloc(1, sizeof(ColumnItem));
+	newColumnItem->left = left;
+	newColumnItem->right = right;
+	return newColumnItem;
 }
 
 
