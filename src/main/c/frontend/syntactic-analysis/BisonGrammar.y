@@ -14,9 +14,9 @@
 
 %union {
 	/** Terminals. */
-	char* string;
-	int integer;
-	float float_value;
+	String string;
+	Integer integer;
+	Float float_value;
 	Token token;
 
 	/** Non-terminals. */
@@ -149,14 +149,14 @@
 
 
 
-json_query:     action[act]                                 { $$ = JsonQuerySemanticAction((Action) $act, NULL)}
-                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction((Action) $act, $query)}
+json_query:     action[act]                                 { $$ = JsonQuerySemanticAction( $act, NULL);}
+                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction( $act, $query);}
 
-action:     create_action                                { $$ = $1; }
-				| select_action                          { $$ = $1; }
-				| delete_action                          { $$ = $1; }
-				| add_action                             { $$ = $1; }
-				| update_action                          { $$ = $1; }
+action:     create_action                                { $$ = (Action *) $1; }
+				| select_action                          { $$ = (Action *) $1; }
+				| delete_action                          { $$ = (Action *) $1; }
+				| add_action                             { $$ = (Action *) $1; }
+				| update_action                          { $$ = (Action *) $1; }
 				;
 
 create_action:
@@ -209,7 +209,7 @@ update_action:
 
 
 column_object:
-                LBRACE column_list[col_list] RBRACE       { $$ = $col_list; }
+                LBRACE column_list[col_list] RBRACE       { $$ = (ColumnObject *) $col_list; }
                 ;
 
 column_list:
@@ -223,7 +223,7 @@ column_item:
 
 
 update_list:
-                LBRACE update_items[upd_items] RBRACE      { $$ = $upd_items; }
+                LBRACE update_items[upd_items] RBRACE      { $$ = (UpdateList *) $upd_items; }
                 ;
 
 update_items:
@@ -233,14 +233,14 @@ update_items:
 
 
 where_object:
-            condition[cond]                                { $$ = $cond; }
+            condition[cond]                                { $$ = (WhereObject *) $cond; }
             | condition[cond] logical_op[log_op] where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, $log_op, $where_obj); }
             | NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
 
             ;
 
 having_object:
-            having_condition[hav_con]                                { $$ = $hav_con; }
+            having_condition[hav_con]                                { $$ = (HavingObject *) $hav_con; }
             | having_condition[hav_con] logical_op[log_op] having_object[hav_obj]     { $$ = HavingObjectSemanticAction($hav_con, $log_op, $hav_obj); }
             | NOT having_object[hav_obj]                            { $$ = HavingObjectSemanticAction(NULL, E_NOT, $hav_obj); }
             ;
@@ -256,18 +256,18 @@ condition:
             ;
 
 aggregate_function:
-                COUNT   { $$ = E_COUNT; }
-                | SUM   { $$ = E_SUM; }
-                | AVG   { $$ = E_AVG; }
-                | MAX   { $$ = E_MAX; }
-                | MIN   { $$ = E_MIN; }
+                COUNT   { $$ = (AggFunc *) E_COUNT; }
+                | SUM   { $$ = (AggFunc *)  E_SUM; }
+                | AVG   { $$ = (AggFunc *)  E_AVG; }
+                | MAX   { $$ = (AggFunc *)  E_MAX; }
+                | MIN   { $$ = (AggFunc *) E_MIN; }
                 ;   
 
 
 operator: 
-                EQUALS             {$$ = E_EQUALS; }
-                | GREATER_THAN     {$$ = E_GREATER_THAN; }
-                | LESS_THAN        {$$ = E_LESS_THAN; }
+                EQUALS             {$$ = (Operator *) E_EQUALS; }
+                | GREATER_THAN     {$$ = (Operator *) E_GREATER_THAN; }
+                | LESS_THAN        {$$ = (Operator *) E_LESS_THAN; }
                 ;
 
 value:
@@ -277,7 +277,7 @@ value:
             ;
 
 array:
-				BRACKET_OPEN value_list BRACKET_CLOSE    { $$ = $2; }
+				BRACKET_OPEN value_list BRACKET_CLOSE    { $$ = (Array *) $2; }
 				;
 
 value_list:
@@ -285,8 +285,8 @@ value_list:
 				| value COMMA value_list                 { $$ = ValueListSemanticAction($1, $3); }
 				;
                 
-logical_op:     AND     { $$ = $1 }
-                | OR    { $$ = $1 }
+logical_op:     AND     { $$ = (LogOp* ) $1; }
+                | OR    { $$ = (LogOp* )  $1; }
                 ;          
 
 %%

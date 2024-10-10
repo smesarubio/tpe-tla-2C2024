@@ -82,18 +82,17 @@ JsonQuery * JsonQuerySemanticAction(Action * action, JsonQuery * jsonQuery){
 }
 
 
-Action * CreateActionSemanticAction(String* table_name, ColumnObject* col_object){
+
+CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Action *newAction = calloc(1, sizeof(Action));
 	CreateAction *newCreateAction = calloc(1, sizeof(CreateAction));
 
 	newCreateAction->table_name = table_name;
 	newCreateAction->column_object = col_object;
-	newAction->actions.create_action = newCreateAction;
-	return newAction;
+	return newCreateAction;
 }
 
-Action * UpdateActionSemanticAction(String* table_name, UpdateList* update_list, WhereObject* where_object){
+UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_list, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Action *newAction = calloc(1, sizeof(Action));
 	UpdateAction *newUpdateAction = calloc(1, sizeof(UpdateAction));
@@ -101,35 +100,30 @@ Action * UpdateActionSemanticAction(String* table_name, UpdateList* update_list,
 	newUpdateAction->table_name = table_name;
 	newUpdateAction->update_list = update_list;
 	newUpdateAction->where_object = where_object;
-	newAction->actions.update_action = newUpdateAction;
-	return newAction;
+	return newUpdateAction;
 }
 
-Action * AddActionSemanticAction(String* table_name, Array* array){
+AddAction * AddActionSemanticAction(String table_name, Array* array){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Action *newAction = calloc(1, sizeof(Action));
 	AddAction *newAddAction = calloc(1, sizeof(AddAction));
 
 	newAddAction->table_name = table_name;
 	newAddAction->array = array;
-	newAction->actions.add_action = newAddAction;
-	return newAction;
+	return newAddAction;
 }
 
-Action * DeleteActionSemanticAction(String* table_name, WhereObject* where_object){
+
+DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Action *newAction  = calloc(1, sizeof(Action));
 	DeleteAction *newDeleteAction = calloc(1, sizeof(DeleteAction));
 
 	newDeleteAction->table_name = table_name;
 	newDeleteAction->where_object = where_object;
-	newAction->actions.delete_action = newDeleteAction;
-	return newAction;
+	return newDeleteAction;
 }
 
-Action* SelectActionSemanticAction(ColumnList* table_column_list, String* table_name, WhereObject* where_object, ColumnList* groupby_column_list,HavingObject* having_object){
+SelectAction* SelectActionSemanticAction(ColumnList* table_column_list, String table_name, WhereObject* where_object, ColumnList* groupby_column_list,HavingObject* having_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Action* newAction = calloc(1, sizeof(Action));
 	SelectAction* newSelectAction = calloc(1, sizeof(SelectAction));
 
 	newSelectAction->group_by_column_list = groupby_column_list;
@@ -137,8 +131,7 @@ Action* SelectActionSemanticAction(ColumnList* table_column_list, String* table_
 	newSelectAction->table_column_list = table_column_list;
 	newSelectAction->table_name = table_name;
 	newSelectAction->where_objects = where_object;
-	newAction->actions.select_action = newSelectAction;
-	return newAction;
+	return newSelectAction;
 }
 
 
@@ -155,7 +148,7 @@ ColumnList * ColumnListSemanticAction(ColumnItem * column_item, ColumnList* colu
 	}
 }
 
-ColumnItem * ColumnItemSemanticAction(String* left, String * right){
+ColumnItem * ColumnItemSemanticAction(String left, String right){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	ColumnItem * newColumnItem = calloc(1, sizeof(ColumnItem));
 	newColumnItem->left = left;
@@ -164,7 +157,7 @@ ColumnItem * ColumnItemSemanticAction(String* left, String * right){
 }
 
 
-UpdateItems * UpdateItemSemanticAction(String * string, Value * value, UpdateItems * updateItems ){
+UpdateItems * UpdateItemSemanticAction(String string, Value * value, UpdateItems * updateItems ){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	UpdateItems * newUpdateList = calloc(1, sizeof(UpdateItems));
 	if(updateItems != NULL){
@@ -211,7 +204,7 @@ HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, Log
 	}
 }
 
-Condition * ConditionSemanticAction(String* string, Operator* operator, Value* value){
+Condition * ConditionSemanticAction(String string, Operator* operator, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Condition * newCondition = calloc(1, sizeof(Condition));
 	newCondition->string = string;
@@ -220,21 +213,21 @@ Condition * ConditionSemanticAction(String* string, Operator* operator, Value* v
 	return newCondition;
 }
 
-Value * StringValueSemanticAction(String* string){
+Value * StringValueSemanticAction(String string){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Value * newValue = calloc(1, sizeof(Value));
 	newValue->values.string = string;
 	return newValue;
 }
 
-Value * IntegerValueSemanticAction(Integer* integer){
+Value * IntegerValueSemanticAction(Integer integer){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Value * newValue = calloc(1, sizeof(Value));
 	newValue->values.integer = integer;
 	return newValue;
 }
 
-Value * FloatValueSemanticAction(Float* float_value){
+Value * FloatValueSemanticAction(Float float_value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Value * newValue = calloc(1, sizeof(Value));
 	newValue->values.float_value = float_value;
@@ -254,7 +247,7 @@ ValueList * ValueListSemanticAction(Value* value, ValueList* value_list){
 	}
 }
 
-HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String* string, Operator* operator, Value* value){
+HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String string, Operator* operator, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	HavingCondition* newHavingCondition = calloc(1, sizeof(HavingCondition));
 

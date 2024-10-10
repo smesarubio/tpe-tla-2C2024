@@ -26,22 +26,22 @@ void shutdownBisonActionsModule();
 // Program * ExpressionProgramSemanticAction(CompilerState * compilerState, Expression * expression);
 
 JsonQuery * JsonQuerySemanticAction(Action * action, JsonQuery * jsonQuery);
-Action * CreateActionSemanticAction(String* table_name, ColumnObject* col_object);
-Action * UpdateActionSemanticAction(String* table_name, UpdateList* update_list, WhereObject* where_object);
-Action * AddActionSemanticAction(String* table_name, Array* array);
-Action * DeleteActionSemanticAction(String* table_name, WhereObject* where_object);
-Action* SelectActionSemanticAction(ColumnList* table_column_list, String* table_name, WhereObject* where_object, ColumnList* groupby_column_list, HavingObject* having_object);
+CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_object);
+UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_list, WhereObject* where_object);
+AddAction * AddActionSemanticAction(String table_name, Array* array);
+DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object);
+SelectAction* SelectActionSemanticAction(ColumnList* table_column_list, String table_name, WhereObject* where_object, ColumnList* groupby_column_list, HavingObject* having_object);
 ColumnList * ColumnListSemanticAction(ColumnItem* column_item,  ColumnList* column_list);
-ColumnItem * ColumnItemSemanticAction(String* left, String * right);
-UpdateItems * UpdateItemSemanticAction(String * string, Value * value, UpdateItems * updateItems);
+ColumnItem * ColumnItemSemanticAction(String left, String right);
+UpdateItems * UpdateItemSemanticAction(String string, Value * value, UpdateItems * updateItems);
 WhereObject * WhereObjectSemanticAction(Condition * condition, LogOp* logical_op, WhereObject* where_object);
 HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, LogOp* logical_op, HavingObject* having_object);
-Condition * ConditionSemanticAction(String* string, Operator* operator, Value* value);
-Value * StringValueSemanticAction(String* string);
-Value * IntegerValueSemanticAction(Integer* integer);
-Value * FloatValueSemanticAction(Float* float_value);
+Condition * ConditionSemanticAction(String string, Operator* operator, Value* value);
+Value * StringValueSemanticAction(String string);
+Value * IntegerValueSemanticAction(Integer integer);
+Value * FloatValueSemanticAction(Float float_value);
 ValueList * ValueListSemanticAction(Value* value, ValueList* value_list);
-HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String* string, Operator* operator, Value* value);
+HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String string, Operator* operator, Value* value);
 
 
 #endif

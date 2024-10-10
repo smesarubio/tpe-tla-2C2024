@@ -36,12 +36,13 @@ typedef struct Value Value;
 typedef struct Array Array;
 typedef struct ValueList ValueList;
 typedef struct Function Function;
-typedef struct String String;
-typedef struct Integer Integer;
-typedef struct Float Float;
-typedef struct LogOp LogOp;
+// typedef struct String String;
+// typedef struct Integer Integer;
+// typedef struct Float Float;
 typedef struct AggFunc AggFunc;
 typedef struct Operator Operator;
+
+
 
 typedef enum ExpressionType ExpressionType;
 typedef enum FactorType FactorType;
@@ -54,7 +55,14 @@ typedef struct Expression Expression;
 typedef struct Factor Factor;
 typedef struct Program Program;
 
+typedef char * String;
+typedef int Integer;
+typedef float Float;
+typedef LogOpType LogOp;
+
+
 /**
+
  * Node types for the Abstract Syntax Tree (AST).
  */
 
@@ -79,30 +87,30 @@ struct Action {
 };
 
 struct CreateAction {
-    String* table_name;
+    String table_name;
     ColumnObject* column_object;
 };
 
 struct DeleteAction {
-    String* table_name; 
+    String table_name; 
     WhereObject* where_object;
 };
 
 struct SelectAction {
     ColumnList* table_column_list;
-    String* table_name;
+    String table_name;
     WhereObject* where_objects;
     ColumnList* group_by_column_list;
     HavingObject* having_object;
 };
 
 struct AddAction {
-    String* table_name;
+    String table_name;
     Array* array; 
 };
 
 struct UpdateAction {
-    String* table_name;
+    String table_name;
     UpdateList* update_list;
     WhereObject* where_object;
 };
@@ -124,8 +132,8 @@ struct ColumnList {
 };
 
 struct ColumnItem {
-    String* left;
-    String* right;
+    String left;
+    String right;
 };
 
 struct ColumnValue {
@@ -139,11 +147,11 @@ struct UpdateList {
 struct UpdateItems {
     union {
         struct {
-            String* string;
+            String string;
             Value* value;
         } first;
         struct {
-            String* string;
+            String string;
             Value* value;
             UpdateItems* update_items;
         } second;
@@ -192,16 +200,16 @@ struct HavingCondition {
 };
 
 struct Condition {
-    String* string;
+    String string;
     Operator* operator;
     Value* value;
 };
 
 struct Value {
     union {
-        String* string;
-        Integer* integer;
-        Float* float_value;
+        String string;
+        Integer integer;
+        Float float_value;
     } values;
 };
 
@@ -225,21 +233,18 @@ struct Function {
     // Definir los campos aquí
 };
 
-struct String {
-    char* value;
-};
+// struct String {
+//     char* value;
+// };
 
-struct Integer {
-    int value;
-};
+// struct Integer {
+//     int value;
+// };
 
-struct Float {
-    float value;
-};
+// struct Float {
+//     float value;
+// };
 
-struct LogOp {
-    LogOpType* log_op_value;
-};
 
 struct AggFunc {
     AggFuncType* agg_func_value;
