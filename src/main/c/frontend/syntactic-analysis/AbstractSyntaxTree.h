@@ -171,10 +171,10 @@ struct WhereObject {
 struct HavingObject {
     union {
         struct {
-            Condition* condition;
+            HavingCondition* condition;
         } first;
         struct {
-            Condition* condition;
+            HavingCondition* condition;
             LogOp* log_op;
             HavingObject* having_object;
         } second;

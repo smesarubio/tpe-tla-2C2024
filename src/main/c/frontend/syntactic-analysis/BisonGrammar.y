@@ -100,6 +100,10 @@
 %token <token> SET
 %token <token> NOT
 %token <token> NUL
+%token <token> INSERT
+%token <token> INTO
+
+
 
 /** Non-terminals. */
 %type <json_query> json_query
