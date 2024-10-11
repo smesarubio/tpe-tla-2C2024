@@ -37,25 +37,32 @@
 ":"                         { return JsonColonLexemeAction(createLexicalAnalyzerContext()); }
 ","                         { return JsonCommaLexemeAction(createLexicalAnalyzerContext()); }
 
-"CREATE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), CREATE); }
-"SELECT"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SELECT); }
-"FROM"                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), FROM); }
-"WHERE"                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), WHERE); }
-"INSERT"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INSERT); }
-"INTO"                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INTO); }
-"VALUES"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), VALUES); }
-"DELETE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), DELETE); }
-"UPDATE"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), UPDATE); }
-"SET"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SET); }
-"GROUP BY"                  { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), GROUP_BY); }
-"HAVING"                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), HAVING); }
-"COUNT"                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), COUNT); }
-"SUM"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SUM); }
-"AVG"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), AVG); }
-"MAX"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MAX); }
-"MIN"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MIN); }
-"TABLE"                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), TABLE); }
-
+"\"CREATE\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), CREATE); }
+"\"SELECT\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SELECT); }
+"\"FROM\""                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), FROM); }
+"\"WHERE\""                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), WHERE); }
+"\"INSERT\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INSERT); }
+"\"INTO\""                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INTO); }
+"\"VALUES\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), VALUES); }
+"\"DELETE\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), DELETE); }
+"\"UPDATE\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), UPDATE); }
+"\"ADD\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), ADD); }
+"\"SET\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SET); }
+"\"GROUP BY\""                  { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), GROUP_BY); }
+"\"HAVING\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), HAVING); }
+"\"COUNT\""                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), COUNT); }
+"\"SUM\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SUM); }
+"\"AVG\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), AVG); }
+"\"MAX\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MAX); }
+"\"MIN\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MIN); }
+"\"TABLE\""                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), TABLE); }
+"\"EQUALS\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), EQUALS); }
+"\"COLUMNS\""                   { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), COLUMNS); }
+"\"all\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), all); }
+"\"gt\""                        { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), GREATER_THAN); }
+"\"lt\""                        { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), LESS_THAN); }
+"\"OR\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), OR); }
+"\"AND\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), AND); }
 
 "null"                      { return NullLexemeAction(createLexicalAnalyzerContext()); }
 

@@ -37,7 +37,7 @@
     Condition * condition;
     Value * value;
     Array * array;
-    ValueList * value_list;     
+    ValueList * value_list;   
     Function * function;
     AggFunc* aggregate_function;
     Operator* operator;
@@ -102,7 +102,7 @@
 %token <token> NUL
 %token <token> INSERT
 %token <token> INTO
-
+%token <token> all
 
 
 /** Non-terminals. */
@@ -149,8 +149,8 @@
 
 
 
-json_query:     action[act]                                 { $$ = JsonQuerySemanticAction( $act, NULL);}
-                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction( $act, $query);}
+json_query:     action[act]                                 { $$ = JsonQuerySemanticAction( currentCompilerState(), $act, NULL);}
+                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction(currentCompilerState(), $act, $query);}
 
 action:     create_action                                { $$ = (Action *) $1; }
 				| select_action                          { $$ = (Action *) $1; }
@@ -177,16 +177,19 @@ select_action:
                 GROUP_BY COLON column_list[group_col_list] COMMA
                 HAVING COLON having_object[hav_obj]
                 RBRACE
-                RBRACE { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $group_col_list, $hav_obj); }
+                RBRACE                                                                  { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $group_col_list, $hav_obj); }
+                | LBRACE SELECT COLON all COMMA FROM COLON STRING[str] RBRACE           { $$ = SelectAllActionSemanticAction($str); }
+        
                 ;
 delete_action:
 				LBRACE
 				DELETE COLON LBRACE
-				FROM COLON STRING COMMA
+				FROM COLON STRING[str] COMMA
 				WHERE COLON where_object[where_obj]
 				RBRACE
-				RBRACE                              { $$ = DeleteActionSemanticAction($7, $where_obj); }
+				RBRACE                              { $$ = DeleteActionSemanticAction($str, $where_obj); }
 				;
+
 
 add_action:
 				LBRACE
@@ -233,9 +236,9 @@ update_items:
 
 
 where_object:
-            condition[cond]                                { $$ = (WhereObject *) $cond; }
-            | condition[cond] logical_op[log_op] where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, $log_op, $where_obj); }
-            | NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
+            LBRACE condition[cond]  RBRACE                              { $$ = (WhereObject *) $cond; }
+            | LBRACE condition[cond] logical_op[log_op] where_object[where_obj] RBRACE    { $$ = WhereObjectSemanticAction($cond, $log_op, $where_obj); }
+            | LBRACE NOT where_object[where_obj]  RBRACE                     { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
 
             ;
 
@@ -251,9 +254,12 @@ having_condition:
             ;
 
 condition:
-            STRING[str] operator value[val]                      { $$ = ConditionSemanticAction($str, E_EQUALS, $val); }
-        
+            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str, $val); }
             ;
+
+op_object:
+            LBRACE operator value[val]  
+
 
 aggregate_function:
                 COUNT   { $$ = (AggFunc *) E_COUNT; }
@@ -265,9 +271,9 @@ aggregate_function:
 
 
 operator: 
-                EQUALS             {$$ = (Operator *) E_EQUALS; }
-                | GREATER_THAN     {$$ = (Operator *) E_GREATER_THAN; }
-                | LESS_THAN        {$$ = (Operator *) E_LESS_THAN; }
+                EQUALS             {$$ = (Operator *) EQUALS; }
+                | GREATER_THAN     {$$ = (Operator *) GREATER_THAN; }
+                | LESS_THAN        {$$ = (Operator *) LESS_THAN; }
                 ;
 
 value:
@@ -284,9 +290,11 @@ value_list:
 				value                                    { $$ = ValueListSemanticAction($1, NULL); }
 				| value COMMA value_list                 { $$ = ValueListSemanticAction($1, $3); }
 				;
-                
-logical_op:     AND     { $$ = LogOpSemanticAction(E_AND); }
-                | OR    { $$ = LogOpSemanticAction(E_OR); }
+                                
+
+
+logical_op:     AND     { $$ = LogOpSemanticAction(AND); }
+                | OR    { $$ = LogOpSemanticAction(OR); }
                 ;          
 
 %%

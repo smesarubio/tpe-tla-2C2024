@@ -68,20 +68,16 @@ static void _logSyntacticAnalyzerAction(const char * functionName) {
 // 	return program;
 // }
 
-
-
-
-JsonQuery * JsonQuerySemanticAction(Action * action, JsonQuery * jsonQuery){
-    _logSyntacticAnalyzerAction(__FUNCTION__);
+JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action, JsonQuery *jsonQuery)
+{
+	_logSyntacticAnalyzerAction(__FUNCTION__);
     JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
     
 	newQuery->query.node.action= action;
 	newQuery->query.node.json_query = jsonQuery;
+	compilerState->succeed = true;
 	return newQuery;
-
 }
-
-
 
 CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
@@ -106,7 +102,6 @@ UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_
 AddAction * AddActionSemanticAction(String table_name, Array* array){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	AddAction *newAddAction = calloc(1, sizeof(AddAction));
-
 	newAddAction->table_name = table_name;
 	newAddAction->array = array;
 	return newAddAction;
@@ -116,16 +111,22 @@ AddAction * AddActionSemanticAction(String table_name, Array* array){
 DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	DeleteAction *newDeleteAction = calloc(1, sizeof(DeleteAction));
-
 	newDeleteAction->table_name = table_name;
 	newDeleteAction->where_object = where_object;
 	return newDeleteAction;
 }
 
+SelectAction* SelectAllActionSemanticAction(String table_name){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	SelectAction *newSelectAction = calloc(1, sizeof(SelectAction));
+	newSelectAction->table_name = table_name;
+	newSelectAction->table_column_list = NULL;
+	return newSelectAction;
+}
+
 SelectAction* SelectActionSemanticAction(ColumnList* table_column_list, String table_name, WhereObject* where_object, ColumnList* groupby_column_list,HavingObject* having_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	SelectAction* newSelectAction = calloc(1, sizeof(SelectAction));
-
 	newSelectAction->group_by_column_list = groupby_column_list;
 	newSelectAction->having_object = having_object;
 	newSelectAction->table_column_list = table_column_list;
@@ -204,11 +205,11 @@ HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, Log
 	}
 }
 
-Condition * ConditionSemanticAction(String string, Operator* operator, Value* value){
+Condition * ConditionSemanticAction(String string, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Condition * newCondition = calloc(1, sizeof(Condition));
 	newCondition->string = string;
-	newCondition->operator = operator;
+	// newCondition->operator = operator;
 	newCondition->value = value;
 	return newCondition;
 }
