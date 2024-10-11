@@ -257,3 +257,10 @@ HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String string
 	return newHavingCondition;
 }
 
+LogOp * LogOpSemanticAction(LogOpType logOpType){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	LogOp* newLogOp = calloc(1, sizeof(LogOp));
+	newLogOp->log_op_type = &logOpType;
+	return newLogOp;
+}
+

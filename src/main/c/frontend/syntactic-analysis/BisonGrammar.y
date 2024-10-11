@@ -285,8 +285,8 @@ value_list:
 				| value COMMA value_list                 { $$ = ValueListSemanticAction($1, $3); }
 				;
                 
-logical_op:     AND     { $$ = (LogOp* ) $1; }
-                | OR    { $$ = (LogOp* )  $1; }
+logical_op:     AND     { $$ = LogOpSemanticAction(E_AND); }
+                | OR    { $$ = LogOpSemanticAction(E_OR); }
                 ;          
 
 %%

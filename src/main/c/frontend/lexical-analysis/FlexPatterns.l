@@ -54,6 +54,7 @@
 "AVG"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), AVG); }
 "MAX"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MAX); }
 "MIN"                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), MIN); }
+"TABLE"                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), TABLE); }
 
 
 "null"                      { return NullLexemeAction(createLexicalAnalyzerContext()); }

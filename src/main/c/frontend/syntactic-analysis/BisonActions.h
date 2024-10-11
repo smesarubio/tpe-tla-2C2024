@@ -42,6 +42,6 @@ Value * IntegerValueSemanticAction(Integer integer);
 Value * FloatValueSemanticAction(Float float_value);
 ValueList * ValueListSemanticAction(Value* value, ValueList* value_list);
 HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String string, Operator* operator, Value* value);
-
+LogOp *LogOpSemanticAction(LogOpType logOpType);
 
 #endif

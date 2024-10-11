@@ -39,6 +39,7 @@ typedef struct Function Function;
 // typedef struct String String;
 // typedef struct Integer Integer;
 // typedef struct Float Float;
+typedef struct LogOp LogOp;
 typedef struct AggFunc AggFunc;
 typedef struct Operator Operator;
 
@@ -58,7 +59,6 @@ typedef struct Program Program;
 typedef char * String;
 typedef int Integer;
 typedef float Float;
-typedef LogOpType LogOp;
 
 
 /**
@@ -252,6 +252,10 @@ struct AggFunc {
 
 struct Operator {
     OperatorType* operator_type;
+};
+
+struct LogOp {
+    LogOpType * log_op_type;
 };
 
 
