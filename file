@@ -1,0 +1,6 @@
+{
+  "ADD" : {
+    "TABLE" : "tabla",
+    "VALUES" : [1,2,3]
+  }
+}

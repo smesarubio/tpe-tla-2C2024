@@ -1,0 +1,10 @@
+{
+  "CREATE": {
+    "TABLE": "users",
+    "COLUMNS": {
+      "id": "INTEGER",
+      "name": "STRING",
+      "email": "STRING"
+    }
+  }
+}

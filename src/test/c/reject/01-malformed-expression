@@ -1,0 +1,5 @@
+{
+  "SELECT" : "all", 
+  { "FROM" : "users"
+  }
+}

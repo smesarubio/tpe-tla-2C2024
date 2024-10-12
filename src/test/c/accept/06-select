@@ -1,0 +1,8 @@
+{
+  "SELECT": ["name", "salary"],
+  "FROM": "employees",
+  "WHERE": {
+    "department": "sales",
+    "salary": {"gt": 50000}
+  }
+}

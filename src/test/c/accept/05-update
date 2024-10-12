@@ -1,0 +1,11 @@
+{
+  "UPDATE": {
+    "TABLE": "users",
+    "SET": {
+      "email": "new.email@example.com"
+    },
+    "WHERE": {
+      "id": 123
+    }
+  }
+}
