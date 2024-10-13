@@ -74,6 +74,12 @@
 %destructor { releaseOperator($$); } <operator>
 %destructor { releaseValue($$); } <value>
 %destructor { releaseJoin($$); } <join>
+%destructor { releaseInsertList($$); } <insert_list>
+%destructor { releaseHavingObject($$); } <having_object>
+%destructor { releaseLogOp($$); } <logical_op>
+%destructor { releaseHavingCondition($$); } <having_condition>
+%destructor { releaseAggFunc($$); } <aggregate_function>
+%destructor { releaseValueList($$); } <value_list>
 */
 
 /** Terminals. */
@@ -149,7 +155,6 @@
 %type <having_object> having_clause
 %type <clause> clause
 %type <insert_list> insert_list
-%type <join> join
 
 /**
  * Precedence and associativity.
