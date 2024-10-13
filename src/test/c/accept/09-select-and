@@ -1,0 +1,10 @@
+{
+    "SELECT": ["name", "salary"],
+    "FROM": "employees",
+    "WHERE": {
+        "AND": {
+            "department": "sales",
+            "gt": 1000
+        }
+    }
+}

@@ -42,7 +42,6 @@
 "\"FROM\""                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), FROM); }
 "\"WHERE\""                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), WHERE); }
 "\"INSERT\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INSERT); }
-"\"INTO\""                      { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), INTO); }
 "\"VALUES\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), VALUES); }
 "\"DELETE\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), DELETE); }
 "\"UPDATE\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), UPDATE); }
@@ -64,6 +63,9 @@
 "\"lt\""                        { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), LESS_THAN); }
 "\"OR\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), OR); }
 "\"AND\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), AND); }
+"\"JOIN\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), JOIN); }
+"\"ON\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), ON); }
+
 
 "null"                      { return NullLexemeAction(createLexicalAnalyzerContext()); }
 

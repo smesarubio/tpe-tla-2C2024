@@ -44,7 +44,7 @@ typedef struct AggFunc AggFunc;
 typedef struct Operator Operator;
 typedef struct Clause Clause;
 typedef struct InsertList InsertList;
-
+typedef struct Join Join;
 
 
 typedef enum ExpressionType ExpressionType;
@@ -118,6 +118,7 @@ struct SelectAction {
     Array* group_by_column_list;
     Array* order_by_column_list;
     HavingObject* having_object;
+    Join* join;
 };
 
 struct AddAction {
@@ -266,6 +267,12 @@ struct ValueList {
     } value_list_union;
 };
 
+struct Join {
+    String table_name1;
+    String table_name2;
+    String cond1;
+    String cond2;
+};
 
 struct Function {
     // Definir los campos aquí

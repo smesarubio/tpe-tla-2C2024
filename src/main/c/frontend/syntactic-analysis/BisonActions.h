@@ -31,7 +31,7 @@ CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_o
 UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_list, WhereObject* where_object);
 AddAction * AddActionSemanticAction(String table_name, ValueList* array);
 DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object);
-SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_name, WhereObject* where_object, Array* groupby_column_list, Array* order_by_column_list, HavingObject* having_object);
+SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_name, WhereObject* where_object, Array* groupby_column_list, Array* order_by_column_list, HavingObject* having_object, Join* join);
 SelectAction* SelectAllActionSemanticAction(String table_name);
 ColumnList * ColumnListSemanticAction(ColumnItem* column_item,  ColumnList* column_list);
 ColumnItem * ColumnItemSemanticAction(String left, String right);
@@ -49,6 +49,6 @@ LogOp *LogOpSemanticAction(LogOpType logOpType);
 Clause * ClauseSemanticAction(WhereObject* where_object, Array* group_by_column_list, Array* order_by_column_list, HavingObject* having_object);
 InsertList * SimpleInsertListSemanticAction(ValueList* value_list);
 InsertList * MultipleInsertListSemanticAction(ValueList* value_list, InsertList* list);
-
+Join * JoinSemanticAction(String table_name1, String table_name2, String cond1, String cond2);
 
 #endif

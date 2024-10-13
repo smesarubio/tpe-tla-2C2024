@@ -47,6 +47,7 @@
     Array* array;
     Clause* clause;
     InsertList * insert_list;
+    Join* join;
 }
 
 
@@ -86,8 +87,6 @@
 %token <token> EQUALS
 %token <token> GREATER_THAN
 %token <token> LESS_THAN
-%token <token> PARENTHESIS_OPEN
-%token <token> PARENTHESIS_CLOSE
 %token <token> AND
 %token <token> OR
 %token <token> GROUP_BY
@@ -104,10 +103,12 @@
 %token <token> VALUES
 %token <token> SET
 %token <token> NOT
-%token <token> NUL
 %token <token> INSERT
-%token <token> INTO
 %token <token> all
+%token <token> ON
+%token <token> JOIN
+%token <token> NUL
+
 
 
 /** Non-terminals. */
@@ -140,6 +141,7 @@
 %type <having_object> having_clause
 %type <clause> clause
 %type <insert_list> insert_list
+%type <join> join
 
 /**
  * Precedence and associativity.
@@ -196,7 +198,14 @@ select_action:
     FROM COLON STRING[str] 
     clause[clause_block]
     RBRACE
-        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object); }
+        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object, NULL); }
+    |
+    LBRACE SELECT COLON BRACKET_OPEN string_list[col_list] BRACKET_CLOSE COMMA
+    FROM  COLON STRING[str] 
+    COMMA JOIN COLON LBRACE STRING[str2] COLON LBRACE ON COLON LBRACE STRING[cond1] COLON STRING[cond2] RBRACE RBRACE RBRACE
+    clause[clause_block]
+    RBRACE
+        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object, JoinSemanticAction($str2, $str, $cond1, $cond2)); }
     |
     LBRACE SELECT COLON all COMMA FROM COLON STRING[str] RBRACE
         { $$ = SelectAllActionSemanticAction($str); }
@@ -223,7 +232,10 @@ clause:
 
 where_clause:
     COMMA WHERE COLON LBRACE where_object[where_obj] RBRACE
-        { $$ = $where_obj; };
+        { $$ = $where_obj; } 
+        |  COMMA WHERE COLON LBRACE logical_op[log_op] COLON LBRACE condition[c1] COMMA condition[c2] RBRACE RBRACE
+        { $$ = WhereObjectSemanticAction($c1, $log_op, (WhereObject*)$c2); } 
+        ;
 
 group_by_clause:
     COMMA GROUP_BY COLON BRACKET_OPEN string_list[group_list] BRACKET_CLOSE

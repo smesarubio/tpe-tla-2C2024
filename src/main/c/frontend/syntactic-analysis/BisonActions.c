@@ -133,7 +133,7 @@ SelectAction* SelectAllActionSemanticAction(String table_name){
 	return newSelectAction;
 }
 
-SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_name, WhereObject* where_object, Array* groupby_column_list,Array* order_by_column_list, HavingObject* having_object){
+SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_name, WhereObject* where_object, Array* groupby_column_list,Array* order_by_column_list, HavingObject* having_object, Join* join){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	SelectAction* newSelectAction = calloc(1, sizeof(SelectAction));
 	newSelectAction->group_by_column_list = groupby_column_list;
@@ -142,6 +142,7 @@ SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_
 	newSelectAction->table_name = table_name;
 	newSelectAction->where_objects = where_object;
 	newSelectAction->having_object = having_object;
+	newSelectAction->join = join;
 	return newSelectAction;
 }
 
@@ -313,4 +314,14 @@ Clause * ClauseSemanticAction(WhereObject* where_object, Array* group_by_column_
 	newClause->group_by_column_list = group_by_column_list;
 	newClause->order_by_column_list = order_by_column_list;
 	return newClause;
+}
+
+Join * JoinSemanticAction(String table_name1, String table_name2, String cond1, String cond2){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Join * newJoin = calloc(1, sizeof(Join));
+	newJoin->table_name1 = table_name1;
+	newJoin->table_name2 = table_name2;
+	newJoin->cond1 = cond1;
+	newJoin->cond2 = cond2;
+	return newJoin;
 }
