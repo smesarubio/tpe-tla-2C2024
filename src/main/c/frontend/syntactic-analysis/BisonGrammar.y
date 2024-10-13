@@ -75,7 +75,6 @@
 %destructor { releaseCondition($$); } <condition>
 %destructor { releaseOperator($$); } <operator>
 %destructor { releaseValue($$); } <value>
-%destructor { releaseJoin($$); } <join>
 %destructor { releaseInsertList($$); } <insert_list>
 %destructor { releaseHavingObject($$); } <having_object>
 %destructor { releaseLogOp($$); } <logical_op>
