@@ -66,6 +66,8 @@
 %destructor { releaseExpression($$); } <expression>
 %destructor { releaseFactor($$); } <factor>
 %destructor { releaseProgram($$); } <program>
+*/
+
 %destructor { releaseInsertAction($$); } <insert_action>
 %destructor { releaseArray($$); } <array>
 %destructor { releaseSelectAction($$); } <select_action>
@@ -80,7 +82,6 @@
 %destructor { releaseHavingCondition($$); } <having_condition>
 %destructor { releaseAggFunc($$); } <aggregate_function>
 %destructor { releaseValueList($$); } <value_list>
-*/
 
 /** Terminals. */
 %token <string> STRING
