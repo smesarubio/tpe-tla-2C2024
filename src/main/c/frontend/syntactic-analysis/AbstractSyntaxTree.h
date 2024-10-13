@@ -20,6 +20,7 @@ typedef struct CreateAction CreateAction;
 typedef struct DeleteAction DeleteAction;
 typedef struct SelectAction SelectAction;
 typedef struct AddAction AddAction;
+typedef struct InsertAction InsertAction;
 typedef struct UpdateAction UpdateAction;
 typedef struct ColumnObject ColumnObject;
 typedef struct ColumnList ColumnList;
@@ -36,12 +37,13 @@ typedef struct Value Value;
 typedef struct Array Array;
 typedef struct ValueList ValueList;
 typedef struct Function Function;
-// typedef struct String String;
 // typedef struct Integer Integer;
 // typedef struct Float Float;
 typedef struct LogOp LogOp;
 typedef struct AggFunc AggFunc;
 typedef struct Operator Operator;
+typedef struct Clause Clause;
+typedef struct InsertList InsertList;
 
 
 
@@ -86,6 +88,12 @@ struct Action {
     } actions;
 };
 
+struct InsertAction {
+    String table_name;
+    Array* columns;
+    InsertList* value_list;
+};
+
 struct CreateAction {
     String table_name;
     ColumnObject* column_object;
@@ -96,17 +104,25 @@ struct DeleteAction {
     WhereObject* where_object;
 };
 
+struct Clause {
+    WhereObject* where_object;
+    HavingObject* having_object;
+    Array* group_by_column_list;
+    Array* order_by_column_list;
+};
+
 struct SelectAction {
-    ColumnList* table_column_list;
+    Array* table_column_list;
     String table_name;
     WhereObject* where_objects;
-    ColumnList* group_by_column_list;
+    Array* group_by_column_list;
+    Array* order_by_column_list;
     HavingObject* having_object;
 };
 
 struct AddAction {
     String table_name;
-    Array* array; 
+    ValueList* array; 
 };
 
 struct UpdateAction {
@@ -194,6 +210,7 @@ struct HavingObject {
 };
 
 struct HavingCondition {
+    String string;
     AggFunc* aggregate_func;
     Operator* operator;
     Value* value;
@@ -214,7 +231,27 @@ struct Value {
 };
 
 struct Array {
-    ValueList* value_list;    
+    union {
+        struct {
+            String string;
+        } first;
+        struct {
+            String string;
+            Array* string_list;
+        } second;
+    } string_list_union;  
+};
+
+struct InsertList{
+    union {
+        struct {
+            ValueList* value_list;
+        } first;
+        struct {
+            ValueList* value_list;
+            InsertList* list;
+        } second;
+    };
 };
 
 struct ValueList {
@@ -228,6 +265,7 @@ struct ValueList {
         } second;
     } value_list_union;
 };
+
 
 struct Function {
     // Definir los campos aquí

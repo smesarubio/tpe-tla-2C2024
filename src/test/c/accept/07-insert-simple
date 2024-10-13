@@ -1,0 +1,11 @@
+{
+    "INSERT": "employees",
+    "COLUMNS": ["casa", "perro", "gato"],
+    "VALUES": [
+        ["John Doe", 1500, "sales"],
+        ["Jane Doe", 1500, "sales"],
+        ["John Smith", 2000, "engineering"]
+    ]
+}
+
+

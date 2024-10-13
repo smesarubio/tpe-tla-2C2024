@@ -1,0 +1,7 @@
+{
+    "INSERT": "employees",
+    "COLUMNS": ["casa", "perro", "gato"],
+    "VALUES": [
+        ["John Doe", 1500, "sales"]
+    ]
+}

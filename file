@@ -1,6 +1,10 @@
 {
-  "ADD" : {
-    "TABLE" : "tabla",
-    "VALUES" : [1,2,3]
-  }
+  "INSERT": "employees",
+  "COLUMNS": ["casa", "perro", "gato"],
+  "VALUES": [
+      ["John Doe", 1500, "sales"],
+      ["Jane Doe", 1500, "sales"],
+      ["John Smith", 2000, "engineering"]
+  ]
 }
+

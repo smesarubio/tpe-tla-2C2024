@@ -22,6 +22,7 @@
 	/** Non-terminals. */
 	JsonQuery * json_query;
     Action * action;
+    InsertAction * insert_action;
     CreateAction * create_action;
     DeleteAction * delete_action;
     SelectAction * select_action;
@@ -36,13 +37,16 @@
     HavingObject * having_object;
     Condition * condition;
     Value * value;
-    Array * array;
+    Array * string_list;
     ValueList * value_list;   
     Function * function;
     AggFunc* aggregate_function;
     Operator* operator;
     LogOp* logical_op;
     HavingCondition* having_condition;
+    Array* array;
+    Clause* clause;
+    InsertList * insert_list;
 }
 
 
@@ -87,6 +91,7 @@
 %token <token> AND
 %token <token> OR
 %token <token> GROUP_BY
+%token <token> ORDER_BY
 %token <token> HAVING
 %token <token> COUNT
 %token <token> SUM
@@ -108,6 +113,7 @@
 /** Non-terminals. */
 %type <json_query> json_query
 %type <action> action
+%type <insert_action> insert_action
 %type <create_action> create_action
 %type <delete_action> delete_action
 %type <select_action> select_action
@@ -122,22 +128,30 @@
 %type <having_object> having_object
 %type <condition> condition
 %type <value> value
-%type <array> array
 %type <value_list> value_list
 %type <operator> operator
 %type <aggregate_function> aggregate_function
 %type <logical_op> logical_op
 %type <having_condition> having_condition
-
-
+%type <string_list> string_list
+%type <where_object> where_clause
+%type <array> group_by_clause
+%type <array> order_by_clause
+%type <having_object> having_clause
+%type <clause> clause
+%type <insert_list> insert_list
 
 /**
  * Precedence and associativity.
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
-%left OR
 %left COMMA
+%left WHERE 
+%left GROUP_BY 
+%left ORDER_BY 
+%left HAVING
+%left OR
 %left AND
 %left EQUALS GREATER_THAN LESS_THAN
 
@@ -157,35 +171,91 @@ action:     create_action                                { $$ = (Action *) $1; }
 				| delete_action                          { $$ = (Action *) $1; }
 				| add_action                             { $$ = (Action *) $1; }
 				| update_action                          { $$ = (Action *) $1; }
+                | insert_action                          { $$ = (Action *) $1; }
 				;
+
+insert_action:
+                LBRACE
+                INSERT COLON STRING[str] COMMA
+                COLUMNS COLON BRACKET_OPEN string_list[col_list] BRACKET_CLOSE COMMA
+                VALUES COLON BRACKET_OPEN  insert_list[arr_list]  BRACKET_CLOSE
+                RBRACE
+                                              { $$ = InsertActionSemanticAction($str, $col_list, $arr_list); }
 
 create_action:
                 LBRACE
                 CREATE COLON LBRACE
                 TABLE COLON STRING COMMA
-                COLUMNS COLON column_object[col_obj]
+                COLUMNS COLON LBRACE column_object[col_obj] RBRACE
                 RBRACE
                 RBRACE                              { $$ = CreateActionSemanticAction($7, $col_obj); }
                 ;
 
 select_action:
-                LBRACE
-                SELECT COLON LBRACE
-                COLUMNS COLON column_list[col_list] COMMA
-                FROM COLON STRING COMMA
-                WHERE COLON where_object[where_obj] COMMA
-                GROUP_BY COLON column_list[group_col_list] COMMA
-                HAVING COLON having_object[hav_obj]
-                RBRACE
-                RBRACE                                                                  { $$ = SelectActionSemanticAction($col_list, $11, $where_obj, $group_col_list, $hav_obj); }
-                | LBRACE SELECT COLON all COMMA FROM COLON STRING[str] RBRACE           { $$ = SelectAllActionSemanticAction($str); }
-        
-                ;
+    LBRACE SELECT COLON BRACKET_OPEN string_list[col_list] BRACKET_CLOSE COMMA
+    FROM COLON STRING[str] 
+    clause[clause_block]
+    RBRACE
+        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object); }
+    |
+    LBRACE SELECT COLON all COMMA FROM COLON STRING[str] RBRACE
+        { $$ = SelectAllActionSemanticAction($str); }
+    ;
+
+clause:
+    where_clause[where_obj] group_by_clause[group_list] order_by_clause[order_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction($where_obj, $group_list, $order_list, $hav_obj); }
+    | where_clause[where_obj] group_by_clause[group_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction($where_obj, $group_list, NULL, $hav_obj); }
+    | where_clause[where_obj] group_by_clause[group_list] order_by_clause[order_list]
+        { $$ = ClauseSemanticAction($where_obj, $group_list, $order_list, NULL); }
+    | where_clause[where_obj] order_by_clause[order_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction($where_obj, NULL, $order_list, $hav_obj); }
+    | where_clause[where_obj] group_by_clause[group_list]
+        { $$ = ClauseSemanticAction($where_obj, $group_list, NULL, NULL); }
+    | where_clause[where_obj] order_by_clause[order_list]
+        { $$ = ClauseSemanticAction($where_obj, NULL, $order_list, NULL); }
+    | where_clause[where_obj] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction($where_obj, NULL, NULL, $hav_obj); }
+    | group_by_clause[group_list] order_by_clause[order_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction(NULL, $group_list, $order_list, $hav_obj); }
+    | group_by_clause[group_list] order_by_clause[order_list]
+        { $$ = ClauseSemanticAction(NULL, $group_list, $order_list, NULL); }
+    | group_by_clause[group_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction(NULL, $group_list, NULL, $hav_obj); }
+    | order_by_clause[order_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction(NULL, NULL, $order_list, $hav_obj); }
+    | where_clause[where_obj]
+        { $$ = ClauseSemanticAction($where_obj, NULL, NULL, NULL); }
+    | group_by_clause[group_list]
+        { $$ = ClauseSemanticAction(NULL, $group_list, NULL, NULL); }
+    | order_by_clause[order_list]
+        { $$ = ClauseSemanticAction(NULL, NULL, $order_list, NULL); }
+    | having_clause[hav_obj]
+        { $$ = ClauseSemanticAction(NULL, NULL, NULL, $hav_obj); }
+    | 
+        { $$ = ClauseSemanticAction(NULL, NULL, NULL, NULL); }
+    ;
+
+where_clause:
+    COMMA WHERE COLON LBRACE where_object[where_obj] RBRACE
+        { $$ = $where_obj; };
+
+group_by_clause:
+    COMMA GROUP_BY COLON BRACKET_OPEN string_list[group_list] BRACKET_CLOSE
+        { $$ = $group_list; };
+
+order_by_clause:
+    COMMA ORDER_BY COLON BRACKET_OPEN string_list[order_list] BRACKET_CLOSE
+        { $$ = $order_list; };
+having_clause:
+    COMMA HAVING COLON BRACKET_OPEN LBRACE having_object[hav_obj] RBRACE BRACKET_CLOSE
+        { $$ = $hav_obj; } ;
+
 delete_action:
 				LBRACE
 				DELETE COLON LBRACE
-				FROM COLON STRING[str] COMMA
-				WHERE COLON where_object[where_obj]
+				FROM COLON STRING[str] where_clause[where_obj] 
 				RBRACE
 				RBRACE                              { $$ = DeleteActionSemanticAction($str, $where_obj); }
 				;
@@ -195,7 +265,7 @@ add_action:
 				LBRACE
 				ADD COLON LBRACE
 				TABLE COLON STRING COMMA
-				VALUES COLON array[arr]
+				VALUES COLON BRACKET_OPEN value_list[arr] BRACKET_CLOSE
 				RBRACE
 				RBRACE                              { $$ = AddActionSemanticAction($7, $arr); }
 				;
@@ -204,24 +274,25 @@ update_action:
                 LBRACE
                 UPDATE COLON LBRACE
                 TABLE COLON STRING COMMA
-                SET COLON update_list[upd_list] COMMA
-                WHERE COLON where_object[where_obj]
+                SET COLON update_list[upd_list] where_clause[where_obj]
                 RBRACE
                 RBRACE                              { $$ = UpdateActionSemanticAction($7, $upd_list, $where_obj); }
                 ;
 
 
 column_object:
-                LBRACE column_list[col_list] RBRACE       { $$ = (ColumnObject *) $col_list; }
+                column_list[col_list]        { $$ = (ColumnObject *) $col_list; }
                 ;
 
 column_list:
                 column_item                             { $$ = ColumnListSemanticAction($1, NULL); }
                 | column_list COMMA column_item         { $$ = ColumnListSemanticAction($3, $1); }
+                
                 ;
 
 column_item:
                 STRING COLON STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
+                |STRING COMMA STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
                 ;
 
 
@@ -236,37 +307,33 @@ update_items:
 
 
 where_object:
-            LBRACE condition[cond]  RBRACE                              { $$ = (WhereObject *) $cond; }
-            | LBRACE condition[cond] logical_op[log_op] where_object[where_obj] RBRACE    { $$ = WhereObjectSemanticAction($cond, $log_op, $where_obj); }
-            | LBRACE NOT where_object[where_obj]  RBRACE                     { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
-
+             condition[cond]                               { $$ = (WhereObject *) $cond; }
+            |  condition[cond] COMMA where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, LogOpSemanticAction(AND), $where_obj); }
+            |  NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
             ;
 
 having_object:
             having_condition[hav_con]                                { $$ = (HavingObject *) $hav_con; }
-            | having_condition[hav_con] logical_op[log_op] having_object[hav_obj]     { $$ = HavingObjectSemanticAction($hav_con, $log_op, $hav_obj); }
-            | NOT having_object[hav_obj]                            { $$ = HavingObjectSemanticAction(NULL, E_NOT, $hav_obj); }
+            | having_condition[hav_con] COMMA having_object[hav_obj]  { $$ = HavingObjectSemanticAction($hav_con, LogOpSemanticAction(AND), $hav_obj); }
             ;
 
 having_condition: 
-            aggregate_function[agg_func] PARENTHESIS_OPEN STRING[str] PARENTHESIS_CLOSE operator[op] value[val]
+            aggregate_function[agg_func] COLON STRING[str] COMMA operator[op] COLON value[val]
                                                     { $$ = HavingConditionSemanticAction($agg_func, $str, $op, $val); }
             ;
 
 condition:
-            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str, $val); }
+            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str,NULL, $val); }
+            | operator COLON  value[val]                     { $$ = ConditionSemanticAction(NULL,$1, $3); }
             ;
-
-op_object:
-            LBRACE operator value[val]  
 
 
 aggregate_function:
-                COUNT   { $$ = (AggFunc *) E_COUNT; }
-                | SUM   { $$ = (AggFunc *)  E_SUM; }
-                | AVG   { $$ = (AggFunc *)  E_AVG; }
-                | MAX   { $$ = (AggFunc *)  E_MAX; }
-                | MIN   { $$ = (AggFunc *) E_MIN; }
+                COUNT   { $$ = (AggFunc *) COUNT; }
+                | SUM   { $$ = (AggFunc *)  SUM; }
+                | AVG   { $$ = (AggFunc *)  AVG; }
+                | MAX   { $$ = (AggFunc *)  MAX; }
+                | MIN   { $$ = (AggFunc *) MIN; }
                 ;   
 
 
@@ -282,15 +349,19 @@ value:
             | FLOAT                                  { $$ = FloatValueSemanticAction($1); }
             ;
 
-array:
-				BRACKET_OPEN value_list BRACKET_CLOSE    { $$ = (Array *) $2; }
-				;
+insert_list:    BRACKET_OPEN value_list[val_list] BRACKET_CLOSE COMMA insert_list[ins_list] { $$ = MultipleInsertListSemanticAction($val_list, $ins_list); }
+                | BRACKET_OPEN value_list[val_list] BRACKET_CLOSE                           { $$ = SimpleInsertListSemanticAction($val_list); }
+                ;
 
 value_list:
 				value                                    { $$ = ValueListSemanticAction($1, NULL); }
 				| value COMMA value_list                 { $$ = ValueListSemanticAction($1, $3); }
 				;
-                                
+
+string_list: 
+                STRING                                    { $$ = ArraySemanticAction($1, NULL); }
+                | STRING COMMA string_list                { $$ = ArraySemanticAction($1, $3); }
+                ;                                
 
 
 logical_op:     AND     { $$ = LogOpSemanticAction(AND); }

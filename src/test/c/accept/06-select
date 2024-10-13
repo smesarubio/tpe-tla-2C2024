@@ -1,8 +1,15 @@
+
 {
   "SELECT": ["name", "salary"],
   "FROM": "employees",
   "WHERE": {
-    "department": "sales",
-    "salary": {"gt": 50000}
-  }
+    "department": "sales" ,
+    "gt": 1000,
+    "lt": 2000
+  },
+  "GROUP BY": ["department"],
+  "ORDER BY": ["name"],
+  "HAVING": [
+    {"COUNT": "name", "gt": 1 }
+  ]
 }

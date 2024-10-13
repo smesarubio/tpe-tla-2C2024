@@ -49,6 +49,7 @@
 "\"ADD\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), ADD); }
 "\"SET\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SET); }
 "\"GROUP BY\""                  { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), GROUP_BY); }
+"\"ORDER BY\""                  { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), ORDER_BY); }
 "\"HAVING\""                    { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), HAVING); }
 "\"COUNT\""                     { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), COUNT); }
 "\"SUM\""                       { return SqlKeywordLexemeAction(createLexicalAnalyzerContext(), SUM); }

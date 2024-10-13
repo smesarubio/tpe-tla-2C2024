@@ -79,6 +79,15 @@ JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action
 	return newQuery;
 }
 
+InsertAction * InsertActionSemanticAction(String table_name, Array* columns, InsertList* value_list){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	InsertAction *newInsertAction = calloc(1, sizeof(InsertAction));
+	newInsertAction->table_name = table_name;
+	newInsertAction->columns = columns;
+	newInsertAction->value_list = value_list;
+	return newInsertAction;
+}
+
 CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	CreateAction *newCreateAction = calloc(1, sizeof(CreateAction));
@@ -99,7 +108,7 @@ UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_
 	return newUpdateAction;
 }
 
-AddAction * AddActionSemanticAction(String table_name, Array* array){
+AddAction * AddActionSemanticAction(String table_name, ValueList* array){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	AddAction *newAddAction = calloc(1, sizeof(AddAction));
 	newAddAction->table_name = table_name;
@@ -124,14 +133,15 @@ SelectAction* SelectAllActionSemanticAction(String table_name){
 	return newSelectAction;
 }
 
-SelectAction* SelectActionSemanticAction(ColumnList* table_column_list, String table_name, WhereObject* where_object, ColumnList* groupby_column_list,HavingObject* having_object){
+SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_name, WhereObject* where_object, Array* groupby_column_list,Array* order_by_column_list, HavingObject* having_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	SelectAction* newSelectAction = calloc(1, sizeof(SelectAction));
 	newSelectAction->group_by_column_list = groupby_column_list;
-	newSelectAction->having_object = having_object;
+	newSelectAction->order_by_column_list = order_by_column_list;
 	newSelectAction->table_column_list = table_column_list;
 	newSelectAction->table_name = table_name;
 	newSelectAction->where_objects = where_object;
+	newSelectAction->having_object = having_object;
 	return newSelectAction;
 }
 
@@ -176,7 +186,6 @@ UpdateItems * UpdateItemSemanticAction(String string, Value * value, UpdateItems
 WhereObject * WhereObjectSemanticAction(Condition * condition, LogOp* logical_op, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	WhereObject* newWhereObject = calloc(1, sizeof(WhereObject));
-
 	if(condition != NULL){
 		newWhereObject->where_object_union.second.condition = condition;
 		newWhereObject->where_object_union.second.log_op = logical_op;
@@ -205,11 +214,11 @@ HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, Log
 	}
 }
 
-Condition * ConditionSemanticAction(String string, Value* value){
+Condition * ConditionSemanticAction(String string, Operator* operator, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Condition * newCondition = calloc(1, sizeof(Condition));
 	newCondition->string = string;
-	// newCondition->operator = operator;
+	newCondition->operator = operator;
 	newCondition->value = value;
 	return newCondition;
 }
@@ -235,6 +244,36 @@ Value * FloatValueSemanticAction(Float float_value){
 	return newValue;
 }
 
+
+InsertList * SimpleInsertListSemanticAction(ValueList* value_list){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	InsertList * newInsertList = calloc(1, sizeof(InsertList));
+	newInsertList->first.value_list = value_list;
+	return newInsertList;
+}
+
+InsertList * MultipleInsertListSemanticAction(ValueList* value_list, InsertList* list){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	InsertList * newInsertList = calloc(1, sizeof(InsertList));
+	newInsertList->second.value_list = value_list;
+	newInsertList->second.list = list;
+	return newInsertList;
+	
+}
+
+Array * ArraySemanticAction(String str, Array* string_list){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Array * newStringList = calloc(1, sizeof(Array));
+	if(string_list == NULL){
+		newStringList->string_list_union.first.string = str;
+		return newStringList;
+	}else{
+		newStringList->string_list_union.second.string = str;
+		newStringList->string_list_union.second.string_list = string_list;
+		return newStringList;
+	}
+}
+
 ValueList * ValueListSemanticAction(Value* value, ValueList* value_list){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	ValueList * newValueList = calloc(1, sizeof(ValueList));
@@ -251,7 +290,7 @@ ValueList * ValueListSemanticAction(Value* value, ValueList* value_list){
 HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String string, Operator* operator, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	HavingCondition* newHavingCondition = calloc(1, sizeof(HavingCondition));
-
+	newHavingCondition->string = string;
 	newHavingCondition->aggregate_func = agg_func;
 	newHavingCondition->operator = operator;
 	newHavingCondition->value = value;
@@ -265,3 +304,13 @@ LogOp * LogOpSemanticAction(LogOpType logOpType){
 	return newLogOp;
 }
 
+
+Clause * ClauseSemanticAction(WhereObject* where_object, Array* group_by_column_list, Array* order_by_column_list, HavingObject* having_object){
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Clause* newClause = calloc(1, sizeof(Clause));
+	newClause->where_object = where_object;
+	newClause->having_object = having_object;
+	newClause->group_by_column_list = group_by_column_list;
+	newClause->order_by_column_list = order_by_column_list;
+	return newClause;
+}
