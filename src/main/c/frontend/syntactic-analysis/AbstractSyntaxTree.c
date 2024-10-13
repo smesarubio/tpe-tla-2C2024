@@ -57,9 +57,7 @@ void shutdownAbstractSyntaxTreeModule() {
 // 	}
 // }
 
-// typedef struct {
-//     Action* action;
-// } Program;
+
 
 // void releaseProgram(Program * program) {
 // 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
@@ -69,52 +67,6 @@ void shutdownAbstractSyntaxTreeModule() {
 // 	}
 // }
 
-
-// typedef enum {
-//     CREATE_ACTION,
-//     SELECT_ACTION,
-//     DELETE_ACTION,
-//     ADD_ACTION
-// } ActionType;
-
-// typedef struct {
-//     char* name;
-//     // DataType type;
-// } Column;
-
-// typedef struct {
-//     char* tableName;
-//     Column* columns;
-//     int columnCount;
-// } CreateAction;
-
-// typedef struct {
-//     char** columns;
-//     int columnCount;
-//     char* tableName;
-//     Condition* where;
-// } SelectAction;
-
-// typedef struct {
-//     char* tableName;
-//     Condition* where;
-// } DeleteAction;
-
-// typedef struct {
-//     char* tableName;
-//     Value* values;
-//     int valueCount;
-// } AddAction;
-
-// typedef struct {
-//     ActionType type;
-//     union {
-//         CreateAction create;
-//         SelectAction select;
-//         DeleteAction delete;
-//         AddAction add;
-//     } action;
-// } Action;
 
 
 
@@ -139,3 +91,121 @@ void shutdownAbstractSyntaxTreeModule() {
 //     free(program);
 // }
 
+
+
+
+void releaseInsertAction(InsertAction* insert_action) {
+	if (insert_action == NULL) return;
+	
+	free(insert_action->table_name);
+	
+	if (insert_action->columns != NULL) {
+		releaseArray(insert_action->columns); 
+	}
+
+	if (insert_action->value_list != NULL) {
+		releaseInsertList(insert_action->value_list); 
+	}
+
+	free(insert_action);
+}
+
+void releaseArray(Array* array) {
+	if (array == NULL) return;
+
+	if (array->string_list_union.second.string_list != NULL) {
+		releaseArray(array->string_list_union.second.string_list);  
+	}
+
+	free(array->string_list_union.first.string);
+	free(array);
+}
+
+void releaseSelectAction(SelectAction* select_action) {
+	if (select_action == NULL) return;
+
+	if (select_action->table_column_list != NULL) {
+		releaseArray(select_action->table_column_list);  
+	}
+
+	free(select_action->table_name);
+
+	if (select_action->where_objects != NULL) {
+		releaseWhereObject(select_action->where_objects);
+	}
+
+	if (select_action->group_by_column_list != NULL) {
+		releaseArray(select_action->group_by_column_list);
+	}
+
+	if (select_action->order_by_column_list != NULL) {
+		releaseArray(select_action->order_by_column_list);
+	}
+
+	if (select_action->having_object != NULL) {
+		releaseHavingObject(select_action->having_object);
+	}
+
+	if (select_action->join != NULL) {
+		releaseJoin(select_action->join);
+	}
+
+	free(select_action);
+}
+
+void releaseWhereObject(WhereObject* where_object) {
+	if (where_object == NULL) return;
+
+	if (where_object->where_object_union.second.where_object != NULL) {
+		releaseWhereObject(where_object->where_object_union.second.where_object);
+	}
+
+	if (where_object->where_object_union.second.log_op != NULL) {
+		releaseLogOp(where_object->where_object_union.second.log_op);
+	}
+
+	if (where_object->where_object_union.second.condition != NULL) {
+		releaseCondition(where_object->where_object_union.second.condition);
+	}
+
+	free(where_object);
+}
+
+void releaseCondition(Condition* condition) {
+	if (condition == NULL) return;
+
+	free(condition->string);
+
+	if (condition->operator != NULL) {
+		releaseOperator(condition->operator);
+	}
+
+	if (condition->value != NULL) {
+		releaseValue(condition->value);
+	}
+
+	free(condition);
+}
+
+void releaseOperator(Operator* operator) {
+	if (operator == NULL) return;
+	free(operator->operator_type);
+	free(operator);
+}
+
+void releaseValue(Value* value) {
+	if (value == NULL) return;
+	free(value->values.string);  
+	free(value);
+}
+
+void releaseJoin(Join* join) {
+	if (join == NULL) return;
+
+	free(join->table_name1);
+	free(join->table_name2);
+	free(join->cond1);
+	free(join->cond2);
+
+	free(join);
+}

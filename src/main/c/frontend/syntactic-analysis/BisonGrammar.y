@@ -66,6 +66,14 @@
 %destructor { releaseExpression($$); } <expression>
 %destructor { releaseFactor($$); } <factor>
 %destructor { releaseProgram($$); } <program>
+%destructor { releaseInsertAction($$); } <insert_action>
+%destructor { releaseArray($$); } <array>
+%destructor { releaseSelectAction($$); } <select_action>
+%destructor { releaseWhereObject($$); } <where_object>
+%destructor { releaseCondition($$); } <condition>
+%destructor { releaseOperator($$); } <operator>
+%destructor { releaseValue($$); } <value>
+%destructor { releaseJoin($$); } <join>
 */
 
 /** Terminals. */

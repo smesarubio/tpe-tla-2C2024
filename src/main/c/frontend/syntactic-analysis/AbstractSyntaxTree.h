@@ -346,4 +346,13 @@ void releaseExpression(Expression* expression);
 void releaseFactor(Factor* factor);
 void releaseProgram(Program* program);
 
+void releaseInsertAction(InsertAction* insert_action);
+void releaseArray(Array* array);
+void releaseSelectAction(SelectAction* select_action);
+void releaseWhereObject(WhereObject* where_object);
+void releaseCondition(Condition* condition);
+void releaseOperator(Operator* operator);
+void releaseValue(Value* value);
+void releaseJoin(Join* join);
+
 #endif
