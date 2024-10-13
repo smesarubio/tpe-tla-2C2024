@@ -205,34 +205,18 @@ select_action:
 clause:
     where_clause[where_obj] group_by_clause[group_list] order_by_clause[order_list] having_clause[hav_obj]
         { $$ = ClauseSemanticAction($where_obj, $group_list, $order_list, $hav_obj); }
-    | where_clause[where_obj] group_by_clause[group_list] having_clause[hav_obj]
-        { $$ = ClauseSemanticAction($where_obj, $group_list, NULL, $hav_obj); }
     | where_clause[where_obj] group_by_clause[group_list] order_by_clause[order_list]
         { $$ = ClauseSemanticAction($where_obj, $group_list, $order_list, NULL); }
-    | where_clause[where_obj] order_by_clause[order_list] having_clause[hav_obj]
-        { $$ = ClauseSemanticAction($where_obj, NULL, $order_list, $hav_obj); }
     | where_clause[where_obj] group_by_clause[group_list]
         { $$ = ClauseSemanticAction($where_obj, $group_list, NULL, NULL); }
     | where_clause[where_obj] order_by_clause[order_list]
         { $$ = ClauseSemanticAction($where_obj, NULL, $order_list, NULL); }
-    | where_clause[where_obj] having_clause[hav_obj]
-        { $$ = ClauseSemanticAction($where_obj, NULL, NULL, $hav_obj); }
-    | group_by_clause[group_list] order_by_clause[order_list] having_clause[hav_obj]
-        { $$ = ClauseSemanticAction(NULL, $group_list, $order_list, $hav_obj); }
-    | group_by_clause[group_list] order_by_clause[order_list]
-        { $$ = ClauseSemanticAction(NULL, $group_list, $order_list, NULL); }
-    | group_by_clause[group_list] having_clause[hav_obj]
-        { $$ = ClauseSemanticAction(NULL, $group_list, NULL, $hav_obj); }
-    | order_by_clause[order_list] having_clause[hav_obj]
-        { $$ = ClauseSemanticAction(NULL, NULL, $order_list, $hav_obj); }
     | where_clause[where_obj]
         { $$ = ClauseSemanticAction($where_obj, NULL, NULL, NULL); }
-    | group_by_clause[group_list]
-        { $$ = ClauseSemanticAction(NULL, $group_list, NULL, NULL); }
+    | where_clause[where_obj] group_by_clause[group_list] having_clause[hav_obj]
+        { $$ = ClauseSemanticAction($where_obj, $group_list, NULL, $hav_obj); }
     | order_by_clause[order_list]
         { $$ = ClauseSemanticAction(NULL, NULL, $order_list, NULL); }
-    | having_clause[hav_obj]
-        { $$ = ClauseSemanticAction(NULL, NULL, NULL, $hav_obj); }
     | 
         { $$ = ClauseSemanticAction(NULL, NULL, NULL, NULL); }
     ;

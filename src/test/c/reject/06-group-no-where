@@ -1,0 +1,10 @@
+
+{
+  "SELECT": ["name", "salary"],
+  "FROM": "employees",
+  "GROUP BY": ["department"],
+  "ORDER BY": ["name"],
+  "HAVING": [
+    {"COUNT": "name", "gt": 1 }
+  ]
+}
