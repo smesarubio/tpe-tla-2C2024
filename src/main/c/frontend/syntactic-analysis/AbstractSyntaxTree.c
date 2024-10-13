@@ -188,14 +188,26 @@ void releaseCondition(Condition* condition) {
 }
 
 void releaseOperator(Operator* operator) {
-	if (operator == NULL) return;
-	free(operator->operator_type);
+	if (operator == NULL) {
+		return;
+	}
+
+	if (operator->operator_type != NULL) {
+		free(operator->operator_type);
+	}
+
 	free(operator);
 }
 
 void releaseValue(Value* value) {
-	if (value == NULL) return;
-	free(value->values.string);  
+if (value == NULL) {
+		return;
+	}
+
+	if (value->values.string != NULL) {
+		free(value->values.string);
+	}
+
 	free(value);
 }
 
@@ -208,4 +220,124 @@ void releaseJoin(Join* join) {
 	free(join->cond2);
 
 	free(join);
+}
+
+void releaseInsertList(InsertList* insert_list) {
+	if (insert_list == NULL) {
+        return;
+    }
+
+    if (insert_list->first.value_list != NULL) {
+        releaseValueList(insert_list->first.value_list);
+    }
+
+    if (insert_list->second.value_list != NULL) {
+        releaseValueList(insert_list->second.value_list);
+    }
+
+    if (insert_list->second.list != NULL) {
+        releaseInsertList(insert_list->second.list);
+    }
+
+    free(insert_list);
+}
+
+void releaseHavingObject(HavingObject* having_object) {
+	if (having_object == NULL) {
+        return;
+    }
+
+    if (having_object->having_object_union.first.condition != NULL) {
+        releaseHavingCondition(having_object->having_object_union.first.condition);
+    }
+
+    if (having_object->having_object_union.second.condition != NULL) {
+        releaseHavingCondition(having_object->having_object_union.second.condition);
+    }
+
+    if (having_object->having_object_union.second.log_op != NULL) {
+        releaseLogOp(having_object->having_object_union.second.log_op);
+    }
+
+    if (having_object->having_object_union.second.having_object != NULL) {
+        releaseHavingObject(having_object->having_object_union.second.having_object);
+    }
+
+    if (having_object->having_object_union.third.log_op != NULL) {
+        releaseLogOp(having_object->having_object_union.third.log_op);
+    }
+
+    if (having_object->having_object_union.third.having_object != NULL) {
+        releaseHavingObject(having_object->having_object_union.third.having_object);
+    }
+
+    free(having_object);
+}
+
+void releaseLogOp(LogOp* log_op) {
+	if (log_op == NULL) {
+		return;
+	}
+
+	if (log_op->log_op_type != NULL) {
+        free(log_op->log_op_type);
+    }
+
+    free(log_op);
+}
+
+void releaseHavingCondition(HavingCondition* having_condition) {
+	if (having_condition == NULL) {
+        return;
+    }
+
+    if (having_condition->string != NULL) {
+        free(having_condition->string);
+    }
+
+    if (having_condition->aggregate_func != NULL) {
+        releaseAggFunc(having_condition->aggregate_func);
+    }
+
+    if (having_condition->operator != NULL) {
+        releaseOperator(having_condition->operator);
+    }
+
+    if (having_condition->value != NULL) {
+        releaseValue(having_condition->value);
+    }
+
+    free(having_condition);
+}
+
+void releaseAggFunc(AggFunc* agg_func) {
+	if (agg_func == NULL) {
+		return;
+	}
+
+	if (agg_func->agg_func_value != NULL) {
+        free(agg_func->agg_func_value);
+    }
+
+	free(agg_func);
+}
+
+void releaseValueList(ValueList* value_list) {
+	if (value_list == NULL) {
+		return;
+	}
+
+	if (value_list->value_list_union.first.value != NULL) {
+		releaseValue(value_list->value_list_union.first.value);
+	}
+
+	if (value_list->value_list_union.second.value != NULL) {
+		releaseValue(value_list->value_list_union.second.value);
+	}
+
+	if (value_list->value_list_union.second.value_list != NULL) {
+		releaseValueList(value_list->value_list_union.second.value_list);
+	}
+
+	free(value_list);
 }

@@ -354,5 +354,13 @@ void releaseCondition(Condition* condition);
 void releaseOperator(Operator* operator);
 void releaseValue(Value* value);
 void releaseJoin(Join* join);
+void releaseInsertList(InsertList* insert_list);
+void releaseHavingObject(HavingObject* having_object);
+void releaseLogOp(LogOp* log_op);
+void releaseHavingCondition(HavingCondition* having_condition);
+void releaseAggFunc(AggFunc* agg_func);
+void releaseOperator(Operator* operator);
+void releaseValue(Value* value);
+void releaseValueList(ValueList* value_list);
 
 #endif
