@@ -1,0 +1,144 @@
+{
+  "tests": {
+    "acceptance": [
+      {
+        "ADD": {
+          "TABLE": "tabla",
+          "VALUES": [1, "uno", 3.5]
+        }
+      },
+      {
+        "CREATE": {
+          "TABLE": "users",
+          "COLUMNS": {
+            "id": "INTEGER",
+            "name": "STRING",
+            "email": "STRING"
+          }
+        }
+      },
+      {
+        "SELECT": "all",
+        "FROM": "users"
+      },
+      {
+        "DELETE": {
+          "FROM": "users",
+          "WHERE": {
+            "id": 123
+          }
+        }
+      },
+      {
+        "UPDATE": {
+          "TABLE": "users",
+          "SET": {
+            "email": "new.email@example.com"
+          },
+          "WHERE": {
+            "id": 123
+          }
+        }
+      },
+      {
+        "SELECT": ["name", "salary"],
+        "FROM": "employees",
+        "WHERE": {
+          "department": "sales",
+          "gt": 1000,
+          "lt": 2000
+        },
+        "GROUP BY": ["department"],
+        "ORDER BY": ["name"],
+        "HAVING": [
+          {"COUNT": "name", "gt": 1 }
+        ]
+      },
+      {
+        "INSERT": "employees",
+        "COLUMNS": ["casa", "perro", "gato"],
+        "VALUES": [
+          ["John Doe", 1500, "sales"],
+          ["Jane Doe", 1500, "sales"],
+          ["John Smith", 2000, "engineering"]
+        ]
+      },
+      {
+        "INSERT": "employees",
+        "COLUMNS": ["casa", "perro", "gato"],
+        "VALUES": [
+          ["John Doe", 1500, "sales"]
+        ]
+      },
+      {
+        "SELECT": ["name", "salary"],
+        "FROM": "employees",
+        "WHERE": {
+          "AND": {
+            "department": "sales",
+            "gt": 1000
+          }
+        }
+      },
+      {
+        "SELECT": ["name", "salary"],
+        "FROM": "employees",
+        "WHERE": {
+          "OR": {
+            "department": "sales",
+            "gt": 1000
+          }
+        }
+      },
+      {
+        "SELECT": ["employees.name", "departments.department_name"],
+        "FROM": "employees",
+        "JOIN": {
+          "departments": {
+            "ON": {
+              "employees.department_id": "departments.id"
+            }
+          }
+        }
+      }
+    ],
+    "rejection": [
+      {
+        "SELECT": "all", 
+        "{": { "FROM": "users" }
+      },
+      {
+        "SELECT": ["name", "salary"],
+        "FROM": "employees",
+        "WHERE": {
+          "department": "sales",
+          "gt": 1000,
+          "lt": 2000
+        },
+        "ORDER BY": ["name"],
+        "HAVING": [
+          {"COUNT": "name", "gt": 1 }
+        ]
+      },
+      {},
+      {
+        "SELECT": ["name", "salary"]
+      },
+      {
+        "UPDATE": "employees",
+        "WHERE": {
+          "department": "sales"
+        }
+      },
+      {
+        "SELECT": ["name", "salary"],
+        "FROM": "employees",
+        "GROUP BY": ["department"],
+        "ORDER BY": ["name"],
+        "HAVING": [
+          {"COUNT": "name", "gt": 1 }
+        ]
+      }
+    ]
+  }
+}
