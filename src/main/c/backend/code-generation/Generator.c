@@ -23,15 +23,136 @@ static void _generateConstant(const unsigned int indentationLevel, Constant * co
 static void _generateEpilogue(const int value);
 static void _generateExpression(const unsigned int indentationLevel, Expression * expression);
 static void _generateFactor(const unsigned int indentationLevel, Factor * factor);
-static void _generateProgram(Program * program);
+static void _generateProgram(Program *program);
 static void _generatePrologue(void);
 static char * _indentation(const unsigned int indentationLevel);
 static void _output(const unsigned int indentationLevel, const char * const format, ...);
+
+/* NUESTROS */
+
 
 /**
  * Converts and expression type to the proper character of the operation
  * involved, or returns '\0' if that's not possible.
  */
+
+
+
+/**
+ * Generates the output of the program.
+ */
+static void _generateProgram(Program *program)
+{
+	_generateExpression(3, program->expression);
+}
+
+static void _generateJsonQuery(JsonQuery * jsonQuery) {
+	 if(jsonQuery->query.node.json_query == NULL){
+		_generateAction(jsonQuery->query.node.action);
+	 }
+	 else{
+		 _generateJsonQuery(jsonQuery->query.node.json_query);
+		 _generateAction(jsonQuery->query.node.action);
+	 }
+}
+
+static void _generateAction(Action * action) {
+	if (action->actions.create_action != NULL){
+		_generateCreateAction(action->actions.create_action);
+	}
+	else if (action->actions.delete_action != NULL){
+		_generateDeleteAction(action->actions.delete_action);
+	}
+	else if (action->actions.select_action != NULL){
+		_generateSelectAction(action->actions.select_action);
+	}
+	else if (action->actions.add_action != NULL){
+		_generateAddAction(action->actions.add_action);
+	}
+	else if (action->actions.update_action != NULL){
+		_generateUpdateAction(action->actions.update_action);
+	}
+}
+
+static void _generateAddAction(AddAction * addAction) {
+	_output(0, "INSERT INTO %s VALUES (", addAction->table_name);
+	_generateValueList(addAction->array);
+	_output(0, ");\n");
+
+}
+
+static void _generateValueList(ValueList * valueList) {
+	if(valueList->value_list_union.second.value_list != NULL){
+		_generateValueList(valueList->value_list_union.second.value_list);
+		_output(0, ", ");
+	}
+	_generateValue(valueList->value_list_union.first.value);
+}
+
+static void _generateValue(Value * value) {
+	if(value->values.string != NULL){
+		_output(0, "%s", value->values.string);
+	}
+	else if(value->values.integer != NULL){
+		_output(0, "%d", value->values.integer);
+	}
+	else if((value->values.float_value) != NULL){
+		_output(0, "%f", value->values.float_value);
+	}
+}
+
+
+static void _generateCreateAction(CreateAction * createAction) {
+	_output(0, "CREATE TABLE %s (", createAction->table_name);
+	_generateColumnObject(createAction->column_object);
+	_output(0, ");\n");
+}
+
+static void _generateColumnObject(ColumnObject * columnObject) {
+	_generateColumnList(columnObject->column_list);
+}
+
+static void _generateColumnList(ColumnList * columnList) {
+	if(columnList->columnListUnion.second.column_list != NULL){
+		_generateColumnItem(columnList->columnListUnion.second.column_item);
+		_output(0, ", ");
+		_generateColumnList(columnList->columnListUnion.second.column_list);
+	}else{
+		_generateColumnItem(columnList->columnListUnion.first.column_item);
+	}
+
+}
+
+static void _generateColumnItem(ColumnItem * columnItem) {
+	_output(0, "%s %s", columnItem->left, columnItem->right);
+}
+
+static void _generateDeleteAction(DeleteAction * deleteAction) {
+	_output(0, "DELETE FROM %s WHERE ", deleteAction->table_name);
+	_generateWhereObject(deleteAction->where_object);
+	_output(0, ";\n");
+}
+
+static void _generateWhereObject(WhereObject * whereObject) {
+	if(whereObject->where_object_union.second.condition != NULL){
+
+	}else{
+		
+	}
+}
+
+static void _generateCondition(Condition * condition) {
+	if(condition->operator == NULL){
+		_output(0, "%s %s ", condition->string, condition->operator);
+		_generateValue(condition->value);
+	}else{
+
+	}
+
+}
+
+
+
 static const char _expressionTypeToCharacter(const ExpressionType type) {
 	switch (type) {
 		case ADDITION: return '+';
@@ -111,12 +232,6 @@ static void _generateFactor(const unsigned int indentationLevel, Factor * factor
 	_output(indentationLevel, "%s", "]\n");
 }
 
-/**
- * Generates the output of the program.
- */
-static void _generateProgram(Program * program) {
-	_generateExpression(3, program->expression);
-}
 
 /**
  * Creates the prologue of the generated output, a Latex document that renders

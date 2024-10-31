@@ -94,6 +94,8 @@ CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_o
 
 	newCreateAction->table_name = table_name;
 	newCreateAction->column_object = col_object;
+	newCreateAction->type = E_CREATE;
+
 	return newCreateAction;
 }
 
@@ -101,7 +103,7 @@ UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Action *newAction = calloc(1, sizeof(Action));
 	UpdateAction *newUpdateAction = calloc(1, sizeof(UpdateAction));
-
+	newUpdateAction->type = E_UPDATE;
 	newUpdateAction->table_name = table_name;
 	newUpdateAction->update_list = update_list;
 	newUpdateAction->where_object = where_object;
@@ -111,6 +113,7 @@ UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_
 AddAction * AddActionSemanticAction(String table_name, ValueList* array){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	AddAction *newAddAction = calloc(1, sizeof(AddAction));
+	newAddAction->type = E_ADD;
 	newAddAction->table_name = table_name;
 	newAddAction->array = array;
 	return newAddAction;
@@ -120,6 +123,7 @@ AddAction * AddActionSemanticAction(String table_name, ValueList* array){
 DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	DeleteAction *newDeleteAction = calloc(1, sizeof(DeleteAction));
+	newDeleteAction->type = E_DELETE;
 	newDeleteAction->table_name = table_name;
 	newDeleteAction->where_object = where_object;
 	return newDeleteAction;
@@ -128,6 +132,7 @@ DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_
 SelectAction* SelectAllActionSemanticAction(String table_name){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	SelectAction *newSelectAction = calloc(1, sizeof(SelectAction));
+	newSelectAction->type = E_SELECT_ALL;
 	newSelectAction->table_name = table_name;
 	newSelectAction->table_column_list = NULL;
 	return newSelectAction;
@@ -139,6 +144,7 @@ SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_
 	newSelectAction->group_by_column_list = groupby_column_list;
 	newSelectAction->order_by_column_list = order_by_column_list;
 	newSelectAction->table_column_list = table_column_list;
+	newSelectAction->type = E_SELECT;
 	newSelectAction->table_name = table_name;
 	newSelectAction->where_objects = where_object;
 	newSelectAction->having_object = having_object;

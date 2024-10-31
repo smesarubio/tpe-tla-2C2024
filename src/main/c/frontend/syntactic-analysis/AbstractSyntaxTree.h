@@ -68,6 +68,18 @@ typedef float Float;
  * Node types for the Abstract Syntax Tree (AST).
  */
 
+
+typedef enum actionType ActionType;
+
+enum actionType {
+    E_CREATE,
+    E_SELECT,
+    E_SELECT_ALL,
+    E_DELETE,
+    E_ADD,
+    E_UPDATE
+};
+
 struct JsonQuery {
     union {
         Action* action;
@@ -89,17 +101,20 @@ struct Action {
 };
 
 struct InsertAction {
+    ActionType type;
     String table_name;
     Array* columns;
     InsertList* value_list;
 };
 
 struct CreateAction {
+    ActionType type;
     String table_name;
     ColumnObject* column_object;
 };
 
 struct DeleteAction {
+    ActionType type;
     String table_name; 
     WhereObject* where_object;
 };
@@ -112,6 +127,7 @@ struct Clause {
 };
 
 struct SelectAction {
+    ActionType type;
     Array* table_column_list;
     String table_name;
     WhereObject* where_objects;
@@ -122,11 +138,13 @@ struct SelectAction {
 };
 
 struct AddAction {
+    ActionType type;
     String table_name;
     ValueList* array; 
 };
 
 struct UpdateAction {
+    ActionType type;
     String table_name;
     UpdateList* update_list;
     WhereObject* where_object;
@@ -325,13 +343,6 @@ enum AggFuncType {
     E_MIN
 };
 
-enum ActionType {
-    E_CREATE,
-    E_SELECT,
-    E_DELETE,
-    E_ADD,
-    E_UPDATE
-};
 
 enum FactorType {
     E_CONSTANT,
