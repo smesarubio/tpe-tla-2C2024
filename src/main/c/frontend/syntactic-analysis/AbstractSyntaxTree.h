@@ -25,7 +25,6 @@ typedef struct UpdateAction UpdateAction;
 typedef struct ColumnObject ColumnObject;
 typedef struct ColumnList ColumnList;
 typedef struct ColumnItem ColumnItem;
-typedef struct ColumnValue ColumnValue;
 typedef struct UpdateList UpdateList;
 typedef struct UpdateItems UpdateItems;
 typedef struct StringList StringList;
@@ -169,10 +168,6 @@ struct ColumnList {
 struct ColumnItem {
     String left;
     String right;
-};
-
-struct ColumnValue {
-    // Definir los campos aquí
 };
 
 struct UpdateList {
