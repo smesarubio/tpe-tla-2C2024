@@ -79,6 +79,10 @@ enum actionType {
     E_UPDATE
 };
 
+struct Program {
+    JsonQuery * jsonquery;
+};
+
 struct JsonQuery {
     union {
         Action* action;
