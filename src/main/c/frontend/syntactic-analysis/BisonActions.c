@@ -72,10 +72,15 @@ JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action
 {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
     JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
-    
 	newQuery->query.node.action= action;
 	newQuery->query.node.json_query = jsonQuery;
-	compilerState->succeed = true;
+	if (0 < flexCurrentContext()) {
+		logError(_logger, "The final context is not the default (0): %d", flexCurrentContext());
+		compilerState->succeed = false;
+	}
+	else {
+		compilerState->succeed = true;
+	}	
 	return newQuery;
 }
 
@@ -101,7 +106,6 @@ CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_o
 
 UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_list, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
-	Action *newAction = calloc(1, sizeof(Action));
 	UpdateAction *newUpdateAction = calloc(1, sizeof(UpdateAction));
 	newUpdateAction->type = E_UPDATE;
 	newUpdateAction->table_name = table_name;

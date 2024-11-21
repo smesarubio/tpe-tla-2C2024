@@ -79,9 +79,6 @@ enum actionType {
     E_UPDATE
 };
 
-struct Program {
-    JsonQuery * jsonquery;
-};
 
 struct JsonQuery {
     union {
@@ -291,21 +288,6 @@ struct Join {
     String cond2;
 };
 
-struct Function {
-    // Definir los campos aquí
-};
-
-// struct String {
-//     char* value;
-// };
-
-// struct Integer {
-//     int value;
-// };
-
-// struct Float {
-//     float value;
-// };
 
 
 struct AggFunc {
