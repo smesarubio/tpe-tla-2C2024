@@ -41,9 +41,10 @@ const int main(const int count, const char ** arguments) {
 		// Beginning of the Backend... ------------------------------------------------------------
 		logDebugging(logger, "Computing expression value...");
 		JsonQuery * program = compilerState.abstractSyntaxtTree;
-		// ComputationResult computationResult = computeExpression(program->expression);
+		//ComputationResult computationResult = computeExpression(program->expression);
 		if (true) {
-			// compilerState.value = computationResult.value;
+			//compilerState.value = computationResult.value;
+			
 			generate(&compilerState);
 		}
 		else {
@@ -53,7 +54,7 @@ const int main(const int count, const char ** arguments) {
 		// ...end of the Backend. -----------------------------------------------------------------
 		// ----------------------------------------------------------------------------------------
 		logDebugging(logger, "Releasing AST resources...");
-		//releaseProgram(program);
+		releaseProgram(program);
 	}
 	else {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");

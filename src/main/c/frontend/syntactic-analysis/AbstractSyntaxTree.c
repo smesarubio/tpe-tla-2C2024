@@ -14,84 +14,142 @@ void shutdownAbstractSyntaxTreeModule() {
 	}
 }
 
-/** PUBLIC FUNCTIONS */
+void releaseProgram(JsonQuery* program) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+    if (program == NULL) return;
+    releaseAction(program->query.action);
+    free(program);
+}
 
-// void releaseConstant(Constant * constant) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (constant != NULL) {
-// 		free(constant);
-// 	}
-// }
 
-// void releaseExpression(Expression * expression) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (expression != NULL) {
-// 		switch (expression->type) {
-// 			case ADDITION:
-// 			case DIVISION:
-// 			case MULTIPLICATION:
-// 			case SUBTRACTION:
-// 				releaseExpression(expression->leftExpression);
-// 				releaseExpression(expression->rightExpression);
-// 				break;
-// 			case FACTOR:
-// 				releaseFactor(expression->factor);
-// 				break;
-// 		}
-// 		free(expression);
-// 	}
-// }
-
-// void releaseFactor(Factor * factor) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (factor != NULL) {
-// 		switch (factor->type) {
-// 			case CONSTANT:
-// 				releaseConstant(factor->constant);
-// 				break;
-// 			case EXPRESSION:
-// 				releaseExpression(factor->expression);
-// 				break;
-// 		}
-// 		free(factor);
-// 	}
-// }
+////////////// gpt EMPIEZA
+#include "AbstractSyntaxTree.h"
 
 
 
-// void releaseProgram(Program * program) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (program != NULL) {
-// 		releaseExpression(program->expression);
-// 		free(program);
-// 	}
-// }
+void releaseAction(Action *action) {
+    if (action == NULL) return;
 
+    if (action->actions.create_action != NULL) {
+        releaseCreateAction(action->actions.create_action);
+    } else if (action->actions.select_action != NULL) {
+        releaseSelectAction(action->actions.select_action);
+    } else if (action->actions.delete_action != NULL) {
+        releaseDeleteAction(action->actions.delete_action);
+    } else if (action->actions.add_action != NULL) {
+        releaseAddAction(action->actions.add_action);
+    } else if (action->actions.update_action != NULL) {
+        releaseUpdateAction(action->actions.update_action);
+    }
 
+    free(action);
+}
 
+void releaseCreateAction(CreateAction *create_action) {
+    if (create_action == NULL) return;
 
-// void releaseAction(Action* action) {
-//     if (action == NULL) return;
-    
-//     switch (action->type) {
-//         case CREATE_ACTION:
-//             free(action->action.create.tableName);
-//             for (int i = 0; i < action->action.create.columnCount; i++) {
-//                 free(action->action.create.columns[i].name);
-//             }
-//             free(action->action.create.columns);
-//             break;
-//     }
-//     free(action);
-// }
+    free(create_action->table_name);
+    if (create_action->column_object != NULL) {
+        releaseColumnObject(create_action->column_object);
+    }
 
-// void releaseProgram(Program* program) {
-//     if (program == NULL) return;
-//     releaseAction(program->action);
-//     free(program);
-// }
+    free(create_action);
+}
 
+void releaseDeleteAction(DeleteAction *delete_action) {
+    if (delete_action == NULL) return;
 
+    free(delete_action->table_name);
+    if (delete_action->where_object != NULL) {
+        releaseWhereObject(delete_action->where_object);
+    }
+
+    free(delete_action);
+}
+
+void releaseAddAction(AddAction *add_action) {
+    if (add_action == NULL) return;
+
+    free(add_action->table_name);
+    if (add_action->array != NULL) {
+        releaseValueList(add_action->array);
+    }
+
+    free(add_action);
+}
+
+void releaseUpdateAction(UpdateAction *update_action) {
+    if (update_action == NULL) return;
+
+    free(update_action->table_name);
+    if (update_action->update_list != NULL) {
+        releaseUpdateList(update_action->update_list);
+    }
+    if (update_action->where_object != NULL) {
+        releaseWhereObject(update_action->where_object);
+    }
+
+    free(update_action);
+}
+
+void releaseColumnObject(ColumnObject *column_object) {
+    if (column_object == NULL) return;
+    if (column_object->column_list != NULL) {
+        releaseColumnList(column_object->column_list);
+    }
+    free(column_object);
+}
+
+void releaseColumnList(ColumnList *column_list) {
+    if (column_list == NULL) return;
+
+    if (column_list->columnListUnion.second.column_list != NULL) {
+        releaseColumnList(column_list->columnListUnion.second.column_list);
+    }
+
+    if (column_list->columnListUnion.second.column_item != NULL) {
+        releaseColumnItem(column_list->columnListUnion.second.column_item);
+    }
+
+    if (column_list->columnListUnion.first.column_item != NULL) {
+        releaseColumnItem(column_list->columnListUnion.first.column_item);
+    }
+
+    free(column_list);
+}
+
+void releaseColumnItem(ColumnItem *column_item) {
+    if (column_item == NULL) return;
+
+    free(column_item->left);
+    free(column_item->right);
+
+    free(column_item);
+}
+
+void releaseUpdateList(UpdateList *update_list) {
+    if (update_list == NULL) return;
+    if (update_list->update_items != NULL) {
+        releaseUpdateItems(update_list->update_items);
+    }
+    free(update_list);
+}
+
+void releaseUpdateItems(UpdateItems *update_items) {
+    if (update_items == NULL) return;
+
+    if (update_items->update_items_union.second.update_items != NULL) {
+        releaseUpdateItems(update_items->update_items_union.second.update_items);
+    }
+
+    if (update_items->update_items_union.first.value != NULL) {
+        releaseValue(update_items->update_items_union.first.value);
+    }
+
+    free(update_items);
+}
+
+////////////// gpt TERMINA
 
 
 void releaseInsertAction(InsertAction* insert_action) {

@@ -77,13 +77,14 @@ static void _generateValue(Value * value) {
 	else if(value->values.integer != NULL){
 		_output(0, "%d", value->values.integer);
 	}
-	else if((value->values.float_value) != NULL){
+	else { 
 		_output(0, "%f", value->values.float_value);
 	}
 }
 
 
 static void _generateCreateAction(CreateAction * createAction) {
+	logDebugging(_logger, "Generate action");
 	_output(0, "CREATE TABLE %s (", createAction->table_name);
 	_generateColumnObject(createAction->column_object);
 	_output(0, ");\n");
@@ -181,7 +182,7 @@ static void _generateSelectAction(SelectAction *selectAction) {
 
     if (selectAction->having_object != NULL) {
         _output(0, " HAVING ");
-        _generateHavingObject(selectAction->having_object);
+        //_generateHavingObject(selectAction->having_object);
     }
 
     if (selectAction->order_by_column_list != NULL) {
@@ -219,26 +220,48 @@ static void _generateUpdateAction(UpdateAction *updateAction) {
  * Generates the output of an expression.
  */
 static void _generateSQL(JsonQuery * json_query) {
-	// _output(indentationLevel, "%s", "[ $E$, circle, draw, black!20\n");
-	if (json_query->query.action->delete_action != NULL){
-		_generateDeleteAction(json_query->query.action->delete_action);
-	}
-	else if (json_query->query.action->create_action != NULL) {
-		_generateCreateAction(json_query->query.action->create_action);
-	}
-	else if (json_query->query.action->select_action != NULL) {
-		_generateSelectAction(json_query->query.action->select_action);
-	}
-	else if (json_query->query.action->add_action != NULL) {
-		_generateAddAction(json_query->query.action->add_action);
-	}
-	else if (json_query->query.action->update_action != NULL) {
-		_generateUpdateAction(json_query->query.action->update_action);
-	}
-	else {
-		logError(_logger, "ni idea loco");
-	}
+
+	if(json_query->query.node.action != NULL){
+		logCritical(_logger,"tengo node");
+			if (json_query->query.node.action->actions.delete_action != NULL){
+			_generateDeleteAction(json_query->query.node.action->actions.delete_action);
+		}
+		else if (json_query->query.node.action->actions.create_action != NULL) {
+			_generateCreateAction(json_query->query.node.action->actions.create_action);
+		}
+		else if (json_query->query.node.action->actions.select_action != NULL) {
+			_generateSelectAction(json_query->query.node.action->actions.select_action);
+		}
+		else if (json_query->query.node.action->actions.add_action != NULL) {
+			_generateAddAction(json_query->query.node.action->actions.add_action);
+		}
+		else if (json_query->query.node.action->actions.update_action != NULL) {
+			_generateUpdateAction(json_query->query.node.action->actions.update_action);
+		}
+		else {
+			logError(_logger, "ni idea loco");
+		}
+	}else{
+		if (json_query->query.action->actions.delete_action != NULL){
+			_generateDeleteAction(json_query->query.action->actions.delete_action);
+		}
+		else if (json_query->query.action->actions.create_action != NULL) {
+			_generateCreateAction(json_query->query.action->actions.create_action);
+		}
+		else if (json_query->query.action->actions.select_action != NULL) {
+			_generateSelectAction(json_query->query.action->actions.select_action);
+		}
+		else if (json_query->query.action->actions.add_action != NULL) {
+			_generateAddAction(json_query->query.action->actions.add_action);
+		}
+		else if (json_query->query.action->actions.update_action != NULL) {
+			_generateUpdateAction(json_query->query.action->actions.update_action);
+		}
+		else {
+			logError(_logger, "ni idea loco");
+		}
 	// _output(indentationLevel, "%s", "]\n");
+	}
 }
 
 /**

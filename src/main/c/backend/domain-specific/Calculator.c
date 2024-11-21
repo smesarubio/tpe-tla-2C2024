@@ -100,40 +100,6 @@ static char *extractValues(ValueList *values) {
 }
 
 
-CompilationResult computeAction(Action *action) {
-    switch (action->type) {
-        case INSERT_ACTION: {
-            // Extract columns and values from the action
-            char *columns = extractColumns(action->insertAction->columns);
-            char *values = extractValues(action->insertAction->values);
-
-            // Build the SQL statement
-            char *sql = malloc(sizeof(char) * MAX_SQL_LENGTH);
-            snprintf(sql, MAX_SQL_LENGTH, "INSERT INTO %s (%s) VALUES (%s);",
-                     action->insertAction->tableName,
-                     columns,
-                     values);
-
-            // Clean up and return result
-            free(columns);
-            free(values);
-            CompilationResult result = {.success = true, .sql = sql};
-            return result;
-        }
-
-        case SELECT_ACTION: {
-            // Additional case for SELECT
-            // Similar logic can be implemented for other actions
-        }
-
-        default: {
-            logError(_logger, "Unsupported expression type for SQL generation.");
-            return _invalidComputation();
-        }
-    }
-}
-
-
 ComputationResult computeExpression(Expression * expression) {
 	switch (expression->type) {
 		case ADDITION:

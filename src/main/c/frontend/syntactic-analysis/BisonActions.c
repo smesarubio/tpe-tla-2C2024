@@ -71,9 +71,13 @@ static void _logSyntacticAnalyzerAction(const char * functionName) {
 JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action, JsonQuery *jsonQuery)
 {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
-    JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
-	newQuery->query.node.action= action;
-	newQuery->query.node.json_query = jsonQuery;
+	JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
+	if(jsonQuery == NULL){
+		newQuery->query.action = action;
+	} else {
+		newQuery->query.node.action= action;
+		newQuery->query.node.json_query = jsonQuery;
+	}
 	if (0 < flexCurrentContext()) {
 		logError(_logger, "The final context is not the default (0): %d", flexCurrentContext());
 		compilerState->succeed = false;
@@ -81,6 +85,7 @@ JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action
 	else {
 		compilerState->succeed = true;
 	}	
+	compilerState->abstractSyntaxtTree = newQuery;
 	return newQuery;
 }
 

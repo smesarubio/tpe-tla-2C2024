@@ -2,4 +2,4 @@
 
 cd script/ubuntu
 ./build.sh
-./test.sh
+./start.sh file

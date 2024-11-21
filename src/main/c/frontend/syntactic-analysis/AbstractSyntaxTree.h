@@ -336,7 +336,7 @@ enum FactorType {
 void releaseConstant(Constant* constant);
 void releaseExpression(Expression* expression);
 void releaseFactor(Factor* factor);
-void releaseProgram(Program* program);
+void releaseProgram(JsonQuery* program);
 
 void releaseInsertAction(InsertAction* insert_action);
 void releaseArray(Array* array);
