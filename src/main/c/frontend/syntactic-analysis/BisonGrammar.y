@@ -1,7 +1,7 @@
 %{
 
 #include "BisonActions.h"
-
+#include "AbstractSyntaxTree.h"
 %}
 
 %code requires{
@@ -181,13 +181,15 @@
 json_query:     action[act]                                 { $$ = JsonQuerySemanticAction( currentCompilerState(), $act, NULL);}
                 |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction(currentCompilerState(), $act, $query);}
 
-action:     create_action                                { $$ = (Action *) $1; }
-				| select_action                          { $$ = (Action *) $1; }
-				| delete_action                          { $$ = (Action *) $1; }
-				| add_action                             { $$ = (Action *) $1; }
-				| update_action                          { $$ = (Action *) $1; }
-                | insert_action                          { $$ = (Action *) $1; }
-				;
+action: create_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_CREATE; $$->actions.create_action = $1; }
+      | select_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_SELECT; $$->actions.select_action = $1; }
+      | delete_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_DELETE; $$->actions.delete_action = $1; }
+      | add_action          { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_ADD; $$->actions.add_action = $1; }
+      | update_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_UPDATE; $$->actions.update_action = $1; }
+      | insert_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_INSERT; $$->actions.insert_action = $1; }
+;
+
+
 
 insert_action:
                 LBRACE
@@ -242,13 +244,13 @@ clause:
     | 
         { $$ = ClauseSemanticAction(NULL, NULL, NULL, NULL); }
     ;
-
 where_clause:
     COMMA WHERE COLON LBRACE where_object[where_obj] RBRACE
-        { $$ = $where_obj; } 
-        |  COMMA WHERE COLON LBRACE logical_op[log_op] COLON LBRACE condition[c1] COMMA condition[c2] RBRACE RBRACE
-        { $$ = WhereObjectSemanticAction($c1, $log_op, (WhereObject*)$c2); } 
-        ;
+        { $$ = $where_obj; }
+    | COMMA WHERE COLON LBRACE logical_op[log_op] COLON LBRACE condition[c1] COMMA condition[c2] RBRACE RBRACE
+        { $$ = WhereObjectSemanticAction($c1, $log_op, (WhereObject*)$c2); }
+    ;
+
 
 group_by_clause:
     COMMA GROUP_BY COLON BRACKET_OPEN string_list[group_list] BRACKET_CLOSE
@@ -274,9 +276,9 @@ add_action:
 				LBRACE
 				ADD COLON LBRACE
 				TABLE COLON STRING COMMA
-				VALUES COLON BRACKET_OPEN value_list[arr] BRACKET_CLOSE
+				COLUMNS COLON LBRACE column_object[col_obj] RBRACE
 				RBRACE
-				RBRACE                              { $$ = AddActionSemanticAction($7, $arr); }
+				RBRACE                              { $$ = AddActionSemanticAction($7, $col_obj); }
 				;
 
 update_action:
@@ -290,8 +292,10 @@ update_action:
 
 
 column_object:
-                column_list[col_list]        { $$ = (ColumnObject *) $col_list; }
-                ;
+    STRING COLON STRING                              { $$ = ColumnObjectSemanticAction($1, $3, NULL); }
+    | STRING COLON STRING COMMA column_object[col_obj] { $$ = ColumnObjectSemanticAction($1, $3, $col_obj); }
+    ;
+
 
 column_list:
                 column_item                             { $$ = ColumnListSemanticAction($1, NULL); }
@@ -316,10 +320,14 @@ update_items:
 
 
 where_object:
-             condition[cond]                               { $$ = (WhereObject *) $cond; }
-            |  condition[cond] COMMA where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, LogOpSemanticAction(AND), $where_obj); }
-            |  NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
-            ;
+    condition[cond]
+        { $$ = WhereObjectSemanticAction($cond, NULL, NULL); }
+    | condition[cond] COMMA where_object[where_obj]
+        { $$ = WhereObjectSemanticAction($cond, LogOpSemanticAction(E_AND), $where_obj); }
+    | NOT where_object[where_obj]
+        { $$ = WhereObjectSemanticAction(NULL, LogOpSemanticAction(E_NOT), $where_obj); }
+    ;
+
 
 having_object:
             having_condition[hav_con]                                { $$ = (HavingObject *) $hav_con; }

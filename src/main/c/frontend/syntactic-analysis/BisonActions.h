@@ -29,7 +29,7 @@ JsonQuery * JsonQuerySemanticAction(CompilerState * compilerState, Action * acti
 InsertAction * InsertActionSemanticAction(String table_name, Array* columns, InsertList* value_list);
 CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_object);
 UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_list, WhereObject* where_object);
-AddAction * AddActionSemanticAction(String table_name, ValueList* array);
+AddAction * AddActionSemanticAction(String table_name, ColumnObject* col_object);
 DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object);
 SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_name, WhereObject* where_object, Array* groupby_column_list, Array* order_by_column_list, HavingObject* having_object, Join* join);
 SelectAction* SelectAllActionSemanticAction(String table_name);
@@ -50,5 +50,5 @@ Clause * ClauseSemanticAction(WhereObject* where_object, Array* group_by_column_
 InsertList * SimpleInsertListSemanticAction(ValueList* value_list);
 InsertList * MultipleInsertListSemanticAction(ValueList* value_list, InsertList* list);
 Join * JoinSemanticAction(String table_name1, String table_name2, String cond1, String cond2);
-
+ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type, ColumnObject *next) ;
 #endif

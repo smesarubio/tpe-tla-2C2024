@@ -45,19 +45,31 @@ static void _output(const unsigned int indentationLevel, const char * const form
 // {
 // 	_generateSQL(program->json_query);
 // }
+static char* removeQuotes(const char* str) {
+    if (str == NULL) return NULL;
 
-static void _generateArray(Array *array) {
-    if (array->string_list_union.second.string_list != NULL) {
-        _generateArray(array->string_list_union.second.string_list);
-        _output(0, ", ");
+    size_t len = strlen(str);
+    if (len < 2) return strdup(str); // Si el string es demasiado corto, lo devuelve igual.
+
+    // Comprueba si el string comienza y termina con comillas
+    if (str[0] == '"' && str[len - 1] == '"') {
+        // Crea un nuevo string sin las comillas
+        char* result = (char*)malloc(len - 1); // Tamaño: len - 2 (contenido) + 1 (\0)
+        if (result == NULL) return NULL; // Manejo de errores de asignación
+
+        strncpy(result, str + 1, len - 2); // Copia el contenido interno
+        result[len - 2] = '\0'; // Agrega el terminador nulo
+        return result;
     }
-    _output(0, "%s", array->string_list_union.first.string);
+
+    // Si no tiene comillas, lo devuelve igual.
+    return strdup(str);
 }
 
 
 static void _generateAddAction(AddAction * addAction) {
-	_output(0, "INSERT INTO %s VALUES (", addAction->table_name);
-	_generateValueList(addAction->array);
+	_output(0, "ALTER TABLE %s\n ADD (",removeQuotes(addAction->table_name));
+	_generateColumnObject(addAction->column_object);
 	_output(0, ");\n");
 
 }
@@ -74,7 +86,7 @@ static void _generateValue(Value * value) {
 	if(value->values.string != NULL){
 		_output(0, "%s", value->values.string);
 	}
-	else if(value->values.integer != NULL){
+	else if(value->values.integer != 0){
 		_output(0, "%d", value->values.integer);
 	}
 	else { 
@@ -85,73 +97,176 @@ static void _generateValue(Value * value) {
 
 static void _generateCreateAction(CreateAction * createAction) {
 	logDebugging(_logger, "Generate action");
-	_output(0, "CREATE TABLE %s (", createAction->table_name);
+	_output(0, "CREATE TABLE %s (", removeQuotes(createAction->table_name));
 	_generateColumnObject(createAction->column_object);
 	_output(0, ");\n");
 }
 
-static void _generateColumnObject(ColumnObject * columnObject) {
-	_generateColumnList(columnObject->column_list);
+static void _generateColumnObject(ColumnObject *columnObject) {
+    if (columnObject == NULL) return;
+    _generateColumnList(columnObject->column_list);
 }
 
-static void _generateColumnList(ColumnList * columnList) {
-	if(columnList->columnListUnion.second.column_list != NULL){
-		_generateColumnItem(columnList->columnListUnion.second.column_item);
-		_output(0, ", ");
-		_generateColumnList(columnList->columnListUnion.second.column_list);
-	}else{
-		_generateColumnItem(columnList->columnListUnion.first.column_item);
-	}
+static void _generateColumnList(ColumnList *columnList) {
+    if (columnList == NULL) return;
+
+    _generateColumnItem(columnList->columnListUnion.first.column_item);
+
+    if (columnList->columnListUnion.second.column_list != NULL) {
+        _output(0, ", ");
+        _generateColumnList(columnList->columnListUnion.second.column_list);
+    }
 }
 
-static void _generateColumnItem(ColumnItem * columnItem) {
-	_output(0, "%s %s", columnItem->left, columnItem->right);
+static void _generateColumnItem(ColumnItem *columnItem) {
+    if (columnItem == NULL) return;
+    _output(0, "%s %s", removeQuotes(columnItem->left), removeQuotes(columnItem->right));
 }
 
 static void _generateDeleteAction(DeleteAction * deleteAction) {
 	if (deleteAction->where_object == NULL) {
-		_output(0, "DELETE FROM %s", deleteAction->table_name);
+		_output(0, "DELETE FROM %s", removeQuotes(deleteAction->table_name));
 	}
 	else {
-		_output(0, "DELETE FROM %s WHERE ", deleteAction->table_name);
+		_output(0, "DELETE FROM %s WHERE ", removeQuotes(deleteAction->table_name));
 		_generateWhereObject(deleteAction->where_object);
 	}
 	_output(0, ";\n");
 }
 
-static void _generateWhereObject(WhereObject * whereObject) {
-	if (whereObject->where_object_union.second.where_object != NULL) {
-		_generateCondition(whereObject->where_object_union.second.condition);
-		_output(0, " %s ", whereObject->where_object_union.second.log_op);
-		_generateWhereObject(whereObject->where_object_union.second.where_object);
-	} else if (whereObject->where_object_union.third.where_object != NULL) {
-		_output(0, " %s ", whereObject->where_object_union.third.log_op);
-		_generateWhereObject(whereObject->where_object_union.third.where_object);
-	} else {
-		_generateCondition(whereObject->where_object_union.first.condition);
-	}
+static const char* _getLogOpString(LogOpType *logOpType) {
+    if (logOpType == NULL) return "AND";
+
+    switch (*logOpType) {
+        case E_NOT:
+            return "NOT";
+        case E_AND:
+            return "AND";
+        case E_OR:
+            return "OR";
+        default:
+            return "AND";
+    }
 }
 
-static void _generateCondition(Condition * condition) {
-	if (condition->operator == NULL) {
-		_output(0, "%s", condition->string);
-	} else {
-		_output(0, "%s %s ", condition->string, condition->operator->operator_type);
-		_generateValue(condition->value);
-	}
+static void _generateWhereObject(WhereObject *whereObject) {
+    if (whereObject == NULL) return;
+
+    // Handle the second union case
+    if (whereObject->where_object_union.second.where_object != NULL) {
+        _generateCondition(whereObject->where_object_union.second.condition);
+
+        // Print the logical operator
+        if (whereObject->where_object_union.second.log_op != NULL) {
+            _output(0, " %s ", _getLogOpString(whereObject->where_object_union.second.log_op->log_op_type));
+        }
+
+        _generateWhereObject(whereObject->where_object_union.second.where_object);
+    }
+    // Handle the third union case
+    else if (whereObject->where_object_union.third.where_object != NULL) {
+        // Print the logical operator
+        if (whereObject->where_object_union.third.log_op != NULL) {
+            _output(0, " %s ", _getLogOpString(whereObject->where_object_union.third.log_op->log_op_type));
+        }
+
+        _generateWhereObject(whereObject->where_object_union.third.where_object);
+    }
+    // Handle the first union case (base case)
+    else {
+        _generateCondition(whereObject->where_object_union.first.condition);
+    }
+}
+static const char* _getOperatorString(OperatorType *operatorType) {
+    if (operatorType == NULL) return "UNKNOWN";
+
+    switch (*operatorType) {
+        case E_EQUALS:
+            return "=";
+        case E_GREATER_THAN:
+            return ">";
+        case E_LESS_THAN:
+            return "<";
+        default:
+            return "=";
+    }
 }
 
-/**
- * Creates the epilogue of the generated output, that is, the final lines that
- * completes a valid Latex document.
- */
-static void _generateEpilogue(const int value) {
-	_output(0, "%s%d%s",
-		"            [ $", value, "$, circle, draw, blue ]\n"
-		"        ]\n"
-		"    \\end{forest}\n"
-		"\\end{document}\n\n"
-	);
+static void _generateCondition(Condition *condition) {
+    if (condition == NULL) return;
+
+    if (condition->operator == NULL) {
+		// logCritical(_logger, "gen cond %s", condition->string);
+
+        // No operator, print only the string
+        _output(0, "%s = %d", removeQuotes(condition->string), condition->value);
+    } else {
+        // Print the condition with operator
+        _output(0, "%s %s ", removeQuotes(condition->string), _getOperatorString(condition->operator->operator_type));
+        _generateValue(condition->value);
+    }
+}
+
+
+static void _generateArray(Array *array) {
+    if (array == NULL) return;
+
+    // Recursively print each column name
+    if (array->string_list_union.second.string_list != NULL) {
+        _generateArray(array->string_list_union.second.string_list);
+        _output(0, ", ");
+    }
+
+    // Print the current column
+    _output(0, "%s", array->string_list_union.first.string);
+}
+
+static void _generateInsertList(InsertList *insertList) {
+    if (insertList == NULL) return;
+    // Print the opening parenthesis for the value list
+    _output(0, "(");
+
+    // Generate the values in the first ValueList
+    _generateValueList(insertList->first.value_list);
+
+    // Print the closing parenthesis for the value list
+    _output(0, ")");
+
+    // If there are more InsertList elements, print a comma and recurse
+    if (insertList->second.list != NULL) {
+        _output(0, ", ");
+        _generateInsertList(insertList->second.list);
+    }
+}
+
+static void _generateInsertAction(InsertAction *insertAction) {
+    if (insertAction == NULL) {
+        logError(_logger, "InsertAction is NULL");
+        return;
+    }
+
+    // Print the basic INSERT INTO statement
+    _output(0, "INSERT INTO %s ", removeQuotes(insertAction->table_name));
+
+    // If columns are provided, generate the column list
+    if (insertAction->columns != NULL) {
+        _output(0, "(");
+        _generateArray(insertAction->columns);
+        _output(0, ") ");
+    }
+
+    // Print VALUES keyword
+    _output(0, "VALUES ");
+
+    // Generate the values list
+    if (insertAction->value_list != NULL) {
+        _generateInsertList(insertAction->value_list);
+    } else {
+        logError(_logger, "Value list is NULL");
+    }
+
+    // End the statement
+    _output(0, ";\n");
 }
 
 static void _generateSelectAction(SelectAction *selectAction) {
@@ -163,10 +278,10 @@ static void _generateSelectAction(SelectAction *selectAction) {
         _output(0, "*");
     }
 
-    _output(0, " FROM %s", selectAction->table_name);
+    _output(0, " FROM %s", removeQuotes(selectAction->table_name));
 
     if (selectAction->join != NULL) {
-        _output(0, " JOIN %s ON %s = %s", selectAction->join->table_name2,
+        _output(0, " JOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
                 selectAction->join->cond1, selectAction->join->cond2);
     }
 
@@ -194,11 +309,11 @@ static void _generateSelectAction(SelectAction *selectAction) {
 }
 
 static void _generateUpdateAction(UpdateAction *updateAction) {
-    _output(0, "UPDATE %s SET ", updateAction->table_name);
+    _output(0, "UPDATE %s SET ", removeQuotes(updateAction->table_name));
 
     UpdateItems *updateItems = updateAction->update_list->update_items;
     while (updateItems != NULL) {
-        _output(0, "%s = ", updateItems->update_items_union.first.string);
+        _output(0, "%s = ",removeQuotes( updateItems->update_items_union.first.string));
         _generateValue(updateItems->update_items_union.first.value);
 
         updateItems = updateItems->update_items_union.second.update_items;
@@ -220,48 +335,41 @@ static void _generateUpdateAction(UpdateAction *updateAction) {
  * Generates the output of an expression.
  */
 static void _generateSQL(JsonQuery * json_query) {
+	switch (json_query->query.action->type) {
+        case E_CREATE:
+            logDebugging(_logger, "Generando CREATE...");
+            _generateCreateAction(json_query->query.action->actions.create_action);
+            break;
 
-	if(json_query->query.node.action != NULL){
-		logCritical(_logger,"tengo node");
-			if (json_query->query.node.action->actions.delete_action != NULL){
-			_generateDeleteAction(json_query->query.node.action->actions.delete_action);
-		}
-		else if (json_query->query.node.action->actions.create_action != NULL) {
-			_generateCreateAction(json_query->query.node.action->actions.create_action);
-		}
-		else if (json_query->query.node.action->actions.select_action != NULL) {
-			_generateSelectAction(json_query->query.node.action->actions.select_action);
-		}
-		else if (json_query->query.node.action->actions.add_action != NULL) {
-			_generateAddAction(json_query->query.node.action->actions.add_action);
-		}
-		else if (json_query->query.node.action->actions.update_action != NULL) {
-			_generateUpdateAction(json_query->query.node.action->actions.update_action);
-		}
-		else {
-			logError(_logger, "ni idea loco");
-		}
-	}else{
-		if (json_query->query.action->actions.delete_action != NULL){
-			_generateDeleteAction(json_query->query.action->actions.delete_action);
-		}
-		else if (json_query->query.action->actions.create_action != NULL) {
-			_generateCreateAction(json_query->query.action->actions.create_action);
-		}
-		else if (json_query->query.action->actions.select_action != NULL) {
-			_generateSelectAction(json_query->query.action->actions.select_action);
-		}
-		else if (json_query->query.action->actions.add_action != NULL) {
-			_generateAddAction(json_query->query.action->actions.add_action);
-		}
-		else if (json_query->query.action->actions.update_action != NULL) {
-			_generateUpdateAction(json_query->query.action->actions.update_action);
-		}
-		else {
-			logError(_logger, "ni idea loco");
-		}
-	// _output(indentationLevel, "%s", "]\n");
-	}
+        case E_SELECT:
+            logDebugging(_logger, "Generando SELECT...");
+            _generateSelectAction(json_query->query.action->actions.select_action);
+            break;
+
+        case E_DELETE:
+            logDebugging(_logger, "Generando DELETE...");
+            _generateDeleteAction(json_query->query.action->actions.delete_action);
+            break;
+
+        case E_ADD:
+            logDebugging(_logger, "Generando ADD...");
+            _generateAddAction(json_query->query.action->actions.add_action);
+            break;
+
+        case E_UPDATE:
+            logDebugging(_logger, "Generando UPDATE...");
+            _generateUpdateAction(json_query->query.action->actions.update_action);
+            break;
+
+        case E_INSERT:
+            logDebugging(_logger, "Generando INSERT...");
+            _generateInsertAction(json_query->query.action->actions.insert_action);
+            break;
+
+        default:
+            logError(_logger, "Tipo de acción desconocido: %d", json_query->query.action->type);
+            break;
+    }
 }
 
 /**

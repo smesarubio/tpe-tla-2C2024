@@ -72,8 +72,10 @@ JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action
 {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
+
 	if(jsonQuery == NULL){
 		newQuery->query.action = action;
+
 	} else {
 		newQuery->query.node.action= action;
 		newQuery->query.node.json_query = jsonQuery;
@@ -101,10 +103,8 @@ InsertAction * InsertActionSemanticAction(String table_name, Array* columns, Ins
 CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	CreateAction *newCreateAction = calloc(1, sizeof(CreateAction));
-
 	newCreateAction->table_name = table_name;
 	newCreateAction->column_object = col_object;
-	newCreateAction->type = E_CREATE;
 
 	return newCreateAction;
 }
@@ -112,19 +112,17 @@ CreateAction * CreateActionSemanticAction(String table_name, ColumnObject* col_o
 UpdateAction * UpdateActionSemanticAction(String table_name, UpdateList* update_list, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	UpdateAction *newUpdateAction = calloc(1, sizeof(UpdateAction));
-	newUpdateAction->type = E_UPDATE;
 	newUpdateAction->table_name = table_name;
 	newUpdateAction->update_list = update_list;
 	newUpdateAction->where_object = where_object;
 	return newUpdateAction;
 }
 
-AddAction * AddActionSemanticAction(String table_name, ValueList* array){
+AddAction * AddActionSemanticAction(String table_name, ColumnObject* col_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	AddAction *newAddAction = calloc(1, sizeof(AddAction));
-	newAddAction->type = E_ADD;
 	newAddAction->table_name = table_name;
-	newAddAction->array = array;
+	newAddAction->column_object = col_object;
 	return newAddAction;
 }
 
@@ -132,7 +130,6 @@ AddAction * AddActionSemanticAction(String table_name, ValueList* array){
 DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	DeleteAction *newDeleteAction = calloc(1, sizeof(DeleteAction));
-	newDeleteAction->type = E_DELETE;
 	newDeleteAction->table_name = table_name;
 	newDeleteAction->where_object = where_object;
 	return newDeleteAction;
@@ -141,7 +138,6 @@ DeleteAction * DeleteActionSemanticAction(String table_name, WhereObject* where_
 SelectAction* SelectAllActionSemanticAction(String table_name){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	SelectAction *newSelectAction = calloc(1, sizeof(SelectAction));
-	newSelectAction->type = E_SELECT_ALL;
 	newSelectAction->table_name = table_name;
 	newSelectAction->table_column_list = NULL;
 	return newSelectAction;
@@ -153,13 +149,52 @@ SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_
 	newSelectAction->group_by_column_list = groupby_column_list;
 	newSelectAction->order_by_column_list = order_by_column_list;
 	newSelectAction->table_column_list = table_column_list;
-	newSelectAction->type = E_SELECT;
 	newSelectAction->table_name = table_name;
 	newSelectAction->where_objects = where_object;
 	newSelectAction->having_object = having_object;
 	newSelectAction->join = join;
 	return newSelectAction;
 }
+
+ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type, ColumnObject *next) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+
+    // Create a new ColumnItem for the current column
+    ColumnItem *newItem = calloc(1, sizeof(ColumnItem));
+    if (newItem == NULL) {
+        logError(_logger, "Failed to allocate memory for ColumnItem");
+        return NULL;
+    }
+    newItem->left = column_name;
+    newItem->right = column_type;
+
+    // Create a new ColumnList entry
+    ColumnList *newList = calloc(1, sizeof(ColumnList));
+    if (newList == NULL) {
+        logError(_logger, "Failed to allocate memory for ColumnList");
+        free(newItem);
+        return NULL;
+    }
+    newList->columnListUnion.first.column_item = newItem;
+
+    // Link to the next column (if exists)
+    if (next != NULL) {
+        newList->columnListUnion.second.column_list = next->column_list;
+    }
+
+    // Create a new ColumnObject to hold the list
+    ColumnObject *newColumnObject = calloc(1, sizeof(ColumnObject));
+    if (newColumnObject == NULL) {
+        logError(_logger, "Failed to allocate memory for ColumnObject");
+        free(newItem);
+        free(newList);
+        return NULL;
+    }
+    newColumnObject->column_list = newList;
+
+    return newColumnObject;
+}
+
 
 
 ColumnList * ColumnListSemanticAction(ColumnItem * column_item, ColumnList* column_list){
@@ -199,18 +234,35 @@ UpdateItems * UpdateItemSemanticAction(String string, Value * value, UpdateItems
 	}
 }
 
-WhereObject * WhereObjectSemanticAction(Condition * condition, LogOp* logical_op, WhereObject* where_object){
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	WhereObject* newWhereObject = calloc(1, sizeof(WhereObject));
-	if(condition != NULL){
-		newWhereObject->where_object_union.second.condition = condition;
-		newWhereObject->where_object_union.second.log_op = logical_op;
-		newWhereObject->where_object_union.second.where_object = where_object;
-	}else{
-		newWhereObject->where_object_union.third.log_op = logical_op;
-		newWhereObject->where_object_union.third.where_object = where_object;
-	}
-	return newWhereObject;
+WhereObject *WhereObjectSemanticAction(Condition *condition, LogOp *logical_op, WhereObject *where_object) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+
+    // Allocate memory for the new WhereObject
+    WhereObject *newWhereObject = calloc(1, sizeof(WhereObject));
+    if (newWhereObject == NULL) {
+        logError(_logger, "Failed to allocate memory for WhereObject");
+        return NULL;
+    }
+
+    // If a condition is provided, it's a "second" case with a condition and logical operator
+    if (condition != NULL) {
+        newWhereObject->where_object_union.second.condition = condition;
+        newWhereObject->where_object_union.second.log_op = logical_op;
+        newWhereObject->where_object_union.second.where_object = where_object;
+    }
+    // If no condition but a logical operator and another WhereObject are provided, it's a "third" case
+    else if (logical_op != NULL && where_object != NULL) {
+        newWhereObject->where_object_union.third.log_op = logical_op;
+        newWhereObject->where_object_union.third.where_object = where_object;
+    }
+    // Handle cases with just a condition (base case)
+    else if (where_object != NULL) {
+        *newWhereObject = *where_object; // Copy the existing WhereObject
+    } else {
+        logError(_logger, "Invalid WhereObjectSemanticAction parameters");
+    }
+
+    return newWhereObject;
 }
 
 
@@ -234,6 +286,8 @@ Condition * ConditionSemanticAction(String string, Operator* operator, Value* va
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Condition * newCondition = calloc(1, sizeof(Condition));
 	newCondition->string = string;
+
+	logCritical(_logger, "Condition string: %s", value);
 	newCondition->operator = operator;
 	newCondition->value = value;
 	return newCondition;
@@ -265,6 +319,7 @@ InsertList * SimpleInsertListSemanticAction(ValueList* value_list){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	InsertList * newInsertList = calloc(1, sizeof(InsertList));
 	newInsertList->first.value_list = value_list;
+	newInsertList->second.list = NULL; 
 	return newInsertList;
 }
 

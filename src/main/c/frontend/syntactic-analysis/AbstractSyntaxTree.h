@@ -76,7 +76,8 @@ enum actionType {
     E_SELECT_ALL,
     E_DELETE,
     E_ADD,
-    E_UPDATE
+    E_UPDATE, 
+    E_INSERT
 };
 
 
@@ -91,30 +92,29 @@ struct JsonQuery {
 };
 
 struct Action {
+    ActionType type;
     union {
         CreateAction* create_action;
         DeleteAction* delete_action;
         SelectAction* select_action;
         AddAction* add_action;
         UpdateAction* update_action;
+        InsertAction* insert_action;
     } actions;
 };
 
 struct InsertAction {
-    ActionType type;
     String table_name;
     Array* columns;
     InsertList* value_list;
 };
 
 struct CreateAction {
-    ActionType type;
     String table_name;
     ColumnObject* column_object;
 };
 
 struct DeleteAction {
-    ActionType type;
     String table_name; 
     WhereObject* where_object;
 };
@@ -127,7 +127,6 @@ struct Clause {
 };
 
 struct SelectAction {
-    ActionType type;
     Array* table_column_list;
     String table_name;
     WhereObject* where_objects;
@@ -138,13 +137,11 @@ struct SelectAction {
 };
 
 struct AddAction {
-    ActionType type;
     String table_name;
-    ValueList* array; 
+    ColumnObject* column_object;
 };
 
 struct UpdateAction {
-    ActionType type;
     String table_name;
     UpdateList* update_list;
     WhereObject* where_object;
@@ -235,13 +232,14 @@ struct Condition {
     String string;
     Operator* operator;
     Value* value;
+    // String value;
 };
 
 struct Value {
     union {
         String string;
-        Integer integer;
-        Float float_value;
+        int integer;
+        float float_value;
     } values;
 };
 
@@ -330,12 +328,6 @@ enum FactorType {
     E_EXPRESSION
 };
 
-/**
- * Node recursive destructors.
- */
-void releaseConstant(Constant* constant);
-void releaseExpression(Expression* expression);
-void releaseFactor(Factor* factor);
 void releaseProgram(JsonQuery* program);
 
 void releaseInsertAction(InsertAction* insert_action);
@@ -352,5 +344,15 @@ void releaseLogOp(LogOp* log_op);
 void releaseHavingCondition(HavingCondition* having_condition);
 void releaseAggFunc(AggFunc* agg_func);
 void releaseValueList(ValueList* value_list);
+void releaseAction(Action *action);
+void releaseCreateAction(CreateAction *create_action);
+void releaseDeleteAction(DeleteAction *delete_action);
+void releaseAddAction(AddAction *add_action);
+void releaseUpdateAction(UpdateAction *update_action);
+void releaseColumnObject(ColumnObject *column_object);
+void releaseColumnList(ColumnList *column_list);
+void releaseColumnItem(ColumnItem *column_item);
+void releaseUpdateList(UpdateList *update_list);
+void releaseUpdateItems(UpdateItems *update_items);
 
 #endif

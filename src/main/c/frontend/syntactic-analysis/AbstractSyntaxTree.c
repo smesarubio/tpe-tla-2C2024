@@ -14,32 +14,69 @@ void shutdownAbstractSyntaxTreeModule() {
 	}
 }
 
-void releaseProgram(JsonQuery* program) {
-	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-    if (program == NULL) return;
-    releaseAction(program->query.action);
+void releaseProgram(JsonQuery *program) {
+    if (program == NULL) {
+        logDebugging(_logger, "releaseProgram: Program is NULL");
+        return;
+    }
+
+    logDebugging(_logger, "Releasing program actions");
+    if (program->query.action != NULL) {
+        releaseAction(program->query.action);
+    }
+    // if (program->query.node.action != NULL) {
+    //     releaseAction(program->query.node.action);
+    // }
+    logDebugging(_logger, "Releasing program memory");
     free(program);
+
+    logDebugging(_logger, "Program successfully released");
 }
-
-
-////////////// gpt EMPIEZA
-#include "AbstractSyntaxTree.h"
 
 
 
 void releaseAction(Action *action) {
     if (action == NULL) return;
+    switch (action->type) {
+        case E_CREATE:
+            if (action->actions.create_action != NULL) {
+                releaseCreateAction(action->actions.create_action);
+            }
+            break;
 
-    if (action->actions.create_action != NULL) {
-        releaseCreateAction(action->actions.create_action);
-    } else if (action->actions.select_action != NULL) {
-        releaseSelectAction(action->actions.select_action);
-    } else if (action->actions.delete_action != NULL) {
-        releaseDeleteAction(action->actions.delete_action);
-    } else if (action->actions.add_action != NULL) {
-        releaseAddAction(action->actions.add_action);
-    } else if (action->actions.update_action != NULL) {
-        releaseUpdateAction(action->actions.update_action);
+        case E_SELECT:
+            if (action->actions.select_action != NULL) {
+                releaseSelectAction(action->actions.select_action);
+            }
+            break;
+
+        case E_DELETE:
+            if (action->actions.delete_action != NULL) {
+                releaseDeleteAction(action->actions.delete_action);
+            }
+            break;
+
+        case E_ADD:
+            if (action->actions.add_action != NULL) {
+                releaseAddAction(action->actions.add_action);
+            }
+            break;
+
+        case E_UPDATE:
+            if (action->actions.update_action != NULL) {
+                releaseUpdateAction(action->actions.update_action);
+            }
+            break;
+
+        case E_INSERT:
+            if (action->actions.insert_action != NULL) {
+                releaseInsertAction(action->actions.insert_action);
+            }
+            break;
+
+        default:
+            logError(_logger, "Unknown action type: %d", action->type);
+            break;
     }
 
     free(action);
@@ -70,13 +107,22 @@ void releaseDeleteAction(DeleteAction *delete_action) {
 void releaseAddAction(AddAction *add_action) {
     if (add_action == NULL) return;
 
-    free(add_action->table_name);
-    if (add_action->array != NULL) {
-        releaseValueList(add_action->array);
+    // Free table_name if allocated
+    if (add_action->table_name != NULL) {
+        free(add_action->table_name);
+        add_action->table_name = NULL; // Prevent double free
+    }
+
+    // Release column_object if allocated
+    if (add_action->column_object != NULL) {
+        releaseColumnObject(add_action->column_object);
+        add_action->column_object = NULL; // Prevent double free
     }
 
     free(add_action);
+    add_action = NULL; // Avoid dangling pointer
 }
+
 
 void releaseUpdateAction(UpdateAction *update_action) {
     if (update_action == NULL) return;
@@ -94,38 +140,60 @@ void releaseUpdateAction(UpdateAction *update_action) {
 
 void releaseColumnObject(ColumnObject *column_object) {
     if (column_object == NULL) return;
+
+    // Release column_list if allocated
     if (column_object->column_list != NULL) {
         releaseColumnList(column_object->column_list);
+        column_object->column_list = NULL; // Prevent double free
     }
+
     free(column_object);
+    column_object = NULL; // Avoid dangling pointer
 }
+
+
 
 void releaseColumnList(ColumnList *column_list) {
     if (column_list == NULL) return;
 
-    if (column_list->columnListUnion.second.column_list != NULL) {
-        releaseColumnList(column_list->columnListUnion.second.column_list);
-    }
-
-    if (column_list->columnListUnion.second.column_item != NULL) {
-        releaseColumnItem(column_list->columnListUnion.second.column_item);
-    }
-
+    // Free current column_item
     if (column_list->columnListUnion.first.column_item != NULL) {
         releaseColumnItem(column_list->columnListUnion.first.column_item);
+        column_list->columnListUnion.first.column_item = NULL; // Prevent double free
+    }
+
+    // Recursively release the next column_list
+    if (column_list->columnListUnion.second.column_list != NULL) {
+        releaseColumnList(column_list->columnListUnion.second.column_list);
+        column_list->columnListUnion.second.column_list = NULL; // Prevent double free
     }
 
     free(column_list);
+    column_list = NULL; // Avoid dangling pointer
 }
+
+
 
 void releaseColumnItem(ColumnItem *column_item) {
     if (column_item == NULL) return;
 
-    free(column_item->left);
-    free(column_item->right);
+    // Free left string
+    if (column_item->left != NULL) {
+        free(column_item->left);
+        column_item->left = NULL; // Prevent double free
+    }
+
+    // Free right string
+    if (column_item->right != NULL) {
+        free(column_item->right);
+        column_item->right = NULL; // Prevent double free
+    }
 
     free(column_item);
+    column_item = NULL; // Avoid dangling pointer
 }
+
+
 
 void releaseUpdateList(UpdateList *update_list) {
     if (update_list == NULL) return;
@@ -149,35 +217,51 @@ void releaseUpdateItems(UpdateItems *update_items) {
     free(update_items);
 }
 
-////////////// gpt TERMINA
 
 
 void releaseInsertAction(InsertAction* insert_action) {
-	if (insert_action == NULL) return;
-	
-	free(insert_action->table_name);
-	
-	if (insert_action->columns != NULL) {
-		releaseArray(insert_action->columns); 
-	}
+    if (insert_action == NULL) return;
 
-	if (insert_action->value_list != NULL) {
-		releaseInsertList(insert_action->value_list); 
-	}
+    // Free the table_name
+    if (insert_action->table_name != NULL) {
+        free(insert_action->table_name);
+        insert_action->table_name = NULL;
+    }
 
-	free(insert_action);
+    // Release the columns array
+    if (insert_action->columns != NULL) {
+        releaseArray(insert_action->columns);
+        insert_action->columns = NULL;
+    }
+
+    // Release the value list
+    if (insert_action->value_list != NULL) {
+        releaseInsertList(insert_action->value_list);
+        insert_action->value_list = NULL;
+    }
+
+    free(insert_action);
 }
+
 
 void releaseArray(Array* array) {
-	if (array == NULL) return;
+    if (array == NULL) return;
 
-	if (array->string_list_union.second.string_list != NULL) {
-		releaseArray(array->string_list_union.second.string_list);  
-	}
+    // Free the nested array if it exists
+    if (array->string_list_union.second.string_list != NULL) {
+        releaseArray(array->string_list_union.second.string_list);
+        array->string_list_union.second.string_list = NULL;
+    }
 
-	free(array->string_list_union.first.string);
-	free(array);
+    // Free the current string
+    if (array->string_list_union.first.string != NULL) {
+        free(array->string_list_union.first.string);
+        array->string_list_union.first.string = NULL;
+    }
+
+    free(array);
 }
+
 
 void releaseSelectAction(SelectAction* select_action) {
 	if (select_action == NULL) return;
@@ -281,24 +365,23 @@ void releaseJoin(Join* join) {
 }
 
 void releaseInsertList(InsertList* insert_list) {
-	if (insert_list == NULL) {
-        return;
-    }
+    if (insert_list == NULL) return;
 
+    // Release the current value list
     if (insert_list->first.value_list != NULL) {
         releaseValueList(insert_list->first.value_list);
+        insert_list->first.value_list = NULL;
     }
 
-    if (insert_list->second.value_list != NULL) {
-        releaseValueList(insert_list->second.value_list);
-    }
-
+    // Recursively release the next list
     if (insert_list->second.list != NULL) {
         releaseInsertList(insert_list->second.list);
+        insert_list->second.list = NULL;
     }
 
     free(insert_list);
 }
+
 
 void releaseHavingObject(HavingObject* having_object) {
 	if (having_object == NULL) {
@@ -381,21 +464,19 @@ void releaseAggFunc(AggFunc* agg_func) {
 }
 
 void releaseValueList(ValueList* value_list) {
-	if (value_list == NULL) {
-		return;
-	}
+    if (value_list == NULL) return;
 
-	if (value_list->value_list_union.first.value != NULL) {
-		releaseValue(value_list->value_list_union.first.value);
-	}
+    // Release the current value
+    if (value_list->value_list_union.first.value != NULL) {
+        free(value_list->value_list_union.first.value); // Assuming Value is dynamically allocated
+        value_list->value_list_union.first.value = NULL;
+    }
 
-	if (value_list->value_list_union.second.value != NULL) {
-		releaseValue(value_list->value_list_union.second.value);
-	}
+    // Recursively release the next value list
+    if (value_list->value_list_union.second.value_list != NULL) {
+        releaseValueList(value_list->value_list_union.second.value_list);
+        value_list->value_list_union.second.value_list = NULL;
+    }
 
-	if (value_list->value_list_union.second.value_list != NULL) {
-		releaseValueList(value_list->value_list_union.second.value_list);
-	}
-
-	free(value_list);
+    free(value_list);
 }

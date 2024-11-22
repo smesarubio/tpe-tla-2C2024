@@ -24,6 +24,7 @@ static void _generateCreateAction(CreateAction *createAction);
 static void _generateDeleteAction(DeleteAction *deleteAction);
 static void _generateSelectAction(SelectAction *selectAction);
 static void _generateUpdateAction(UpdateAction *updateAction);
+static void _generateInsertAction(InsertAction *insertAction);
 
 static void _generateValueList(ValueList *valueList);
 static void _generateValue(Value *value);

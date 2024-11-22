@@ -1,6 +1,10 @@
 {
   "ADD" : {
     "TABLE" : "tabla",
-    "VALUES" : [1,"uno",3.5]
+    "COLUMNS": {
+      "id": "INTEGER",
+      "name": "STRING",
+      "email": "STRING"
+    }
   }
 }
