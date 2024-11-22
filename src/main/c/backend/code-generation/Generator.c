@@ -86,7 +86,7 @@ static void _generateValue(Value * value) {
     switch (value->type) {
         case VALUE_TYPE_STRING:
             if (value->values.string != NULL) {
-                _output(0, "%s", value->values.string);
+                _output(0, "%s", removeQuotes(value->values.string));
             }
             break;
         case VALUE_TYPE_INTEGER:
@@ -322,7 +322,7 @@ static void _generateSelectAction(SelectAction *selectAction) {
 
     if (selectAction->join != NULL) {
         _output(0, " JOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
-                selectAction->join->cond1, selectAction->join->cond2);
+                removeQuotes(selectAction->join->cond1), removeQuotes(selectAction->join->cond2));
     }
 
     if (selectAction->where_objects != NULL) {
