@@ -234,7 +234,8 @@ UpdateItems * UpdateItemSemanticAction(String string, Value * value, UpdateItems
 	}
 }
 
-WhereObject *WhereObjectSemanticAction(Condition *condition, LogOp *logical_op, WhereObject *where_object) {
+
+WhereObject *WhereObjectSemanticAction(Condition *condition, LogOpType logical_op, WhereObject *where_object) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
 
     // Allocate memory for the new WhereObject
@@ -243,51 +244,47 @@ WhereObject *WhereObjectSemanticAction(Condition *condition, LogOp *logical_op, 
         logError(_logger, "Failed to allocate memory for WhereObject");
         return NULL;
     }
-
-    // If a condition is provided, it's a "second" case with a condition and logical operator
-    if (condition != NULL) {
+    // If a condition is provided, it's the "first" case
+    if (condition != NULL && where_object == NULL) {
+        logDebugging(_logger, "Creating WhereObject for single condition");
+        newWhereObject->where_object_union.first.condition = condition;
+    }
+    // If a condition and logical operator are provided, it's the "second" case
+    else if (where_object != NULL) {
+        logDebugging(_logger, "Creating WhereObject for compound condition");
         newWhereObject->where_object_union.second.condition = condition;
         newWhereObject->where_object_union.second.log_op = logical_op;
         newWhereObject->where_object_union.second.where_object = where_object;
     }
-    // If no condition but a logical operator and another WhereObject are provided, it's a "third" case
-    else if (logical_op != NULL && where_object != NULL) {
+    // If only a logical operator and a nested WhereObject are provided, it's the "third" case
+    else if (condition == NULL && where_object != NULL && logical_op == E_NOT) {
+        logCritical(_logger, "Porque garcha entra aca");
         newWhereObject->where_object_union.third.log_op = logical_op;
         newWhereObject->where_object_union.third.where_object = where_object;
     }
-    // Handle cases with just a condition (base case)
-    else if (where_object != NULL) {
-        *newWhereObject = *where_object; // Copy the existing WhereObject
-    } else {
-        logError(_logger, "Invalid WhereObjectSemanticAction parameters");
-    }
-
+	
     return newWhereObject;
 }
 
 
-HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, LogOp* logical_op, HavingObject* having_object){
+HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, LogOpType logical_op, HavingObject* having_object){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	HavingObject * newHavingObject = calloc(1, sizeof(HavingObject));
 
-	if(having_condition == NULL){
-		newHavingObject->having_object_union.third.log_op = logical_op;
-		newHavingObject->having_object_union.third.having_object = having_object;
-		return newHavingObject;
-	}else{
+	if(having_object == NULL){
+		newHavingObject->having_object_union.first.condition = having_condition;
+	} else {
 		newHavingObject->having_object_union.second.condition = having_condition;
 		newHavingObject->having_object_union.second.having_object = having_object;
 		newHavingObject->having_object_union.second.log_op = logical_op;
-		return newHavingObject;
 	}
+	return newHavingObject;
 }
 
-Condition * ConditionSemanticAction(String string, Operator* operator, Value* value){
+Condition * ConditionSemanticAction(String string, OperatorType operator, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Condition * newCondition = calloc(1, sizeof(Condition));
 	newCondition->string = string;
-
-	logCritical(_logger, "Condition string: %s", value);
 	newCondition->operator = operator;
 	newCondition->value = value;
 	return newCondition;
@@ -297,20 +294,23 @@ Value * StringValueSemanticAction(String string){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Value * newValue = calloc(1, sizeof(Value));
 	newValue->values.string = string;
+	newValue->type =  VALUE_TYPE_STRING;
 	return newValue;
 }
 
-Value * IntegerValueSemanticAction(Integer integer){
+Value * IntegerValueSemanticAction(int integer){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Value * newValue = calloc(1, sizeof(Value));
+	newValue->type =  VALUE_TYPE_INTEGER;
 	newValue->values.integer = integer;
 	return newValue;
 }
 
-Value * FloatValueSemanticAction(Float float_value){
+Value * FloatValueSemanticAction(float float_value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Value * newValue = calloc(1, sizeof(Value));
 	newValue->values.float_value = float_value;
+	newValue->type =  VALUE_TYPE_FLOAT;
 	return newValue;
 }
 
@@ -358,21 +358,17 @@ ValueList * ValueListSemanticAction(Value* value, ValueList* value_list){
 	}
 }
 
-HavingCondition* HavingConditionSemanticAction(AggFunc * agg_func, String string, Operator* operator, Value* value){
+HavingCondition* HavingConditionSemanticAction(AggFuncType agg_func, String string, OperatorType operator, Value* value){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	HavingCondition* newHavingCondition = calloc(1, sizeof(HavingCondition));
+	logCritical(_logger, "string: %s", string);
 	newHavingCondition->string = string;
 	newHavingCondition->aggregate_func = agg_func;
+	logCritical(_logger, "agg func: %d", agg_func);
 	newHavingCondition->operator = operator;
+	logCritical(_logger, "op: %d", operator);
 	newHavingCondition->value = value;
 	return newHavingCondition;
-}
-
-LogOp * LogOpSemanticAction(LogOpType logOpType){
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	LogOp* newLogOp = calloc(1, sizeof(LogOp));
-	newLogOp->log_op_type = &logOpType;
-	return newLogOp;
 }
 
 

@@ -15,10 +15,12 @@
 %union {
 	/** Terminals. */
 	String string;
-	Integer integer;
-	Float float_value;
+	int integer;
+	float float_value;
 	Token token;
-
+    OperatorType operator;
+    AggFuncType aggregate_function;
+    LogOpType logical_op;
 	/** Non-terminals. */
 	JsonQuery * json_query;
     Action * action;
@@ -40,9 +42,6 @@
     Array * string_list;
     ValueList * value_list;   
     Function * function;
-    AggFunc* aggregate_function;
-    Operator* operator;
-    LogOp* logical_op;
     HavingCondition* having_condition;
     Array* array;
     Clause* clause;
@@ -73,13 +72,10 @@
 %destructor { releaseSelectAction($$); } <select_action>
 %destructor { releaseWhereObject($$); } <where_object>
 %destructor { releaseCondition($$); } <condition>
-%destructor { releaseOperator($$); } <operator>
 %destructor { releaseValue($$); } <value>
 %destructor { releaseInsertList($$); } <insert_list>
 %destructor { releaseHavingObject($$); } <having_object>
-%destructor { releaseLogOp($$); } <logical_op>
 %destructor { releaseHavingCondition($$); } <having_condition>
-%destructor { releaseAggFunc($$); } <aggregate_function>
 %destructor { releaseValueList($$); } <value_list>
 
 /** Terminals. */
@@ -259,6 +255,7 @@ group_by_clause:
 order_by_clause:
     COMMA ORDER_BY COLON BRACKET_OPEN string_list[order_list] BRACKET_CLOSE
         { $$ = $order_list; };
+
 having_clause:
     COMMA HAVING COLON BRACKET_OPEN LBRACE having_object[hav_obj] RBRACE BRACKET_CLOSE
         { $$ = $hav_obj; } ;
@@ -321,17 +318,17 @@ update_items:
 
 where_object:
     condition[cond]
-        { $$ = WhereObjectSemanticAction($cond, NULL, NULL); }
+        { $$ = WhereObjectSemanticAction($cond, E_NONE, NULL); }
     | condition[cond] COMMA where_object[where_obj]
-        { $$ = WhereObjectSemanticAction($cond, LogOpSemanticAction(E_AND), $where_obj); }
+        { $$ = WhereObjectSemanticAction($cond, E_AND, $where_obj); }
     | NOT where_object[where_obj]
-        { $$ = WhereObjectSemanticAction(NULL, LogOpSemanticAction(E_NOT), $where_obj); }
+        { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
     ;
 
 
 having_object:
-            having_condition[hav_con]                                { $$ = (HavingObject *) $hav_con; }
-            | having_condition[hav_con] COMMA having_object[hav_obj]  { $$ = HavingObjectSemanticAction($hav_con, LogOpSemanticAction(AND), $hav_obj); }
+            having_condition[hav_con]                                { $$ = HavingObjectSemanticAction($hav_con, E_NONE, NULL); }
+            | having_condition[hav_con] COMMA having_object[hav_obj]  { $$ = HavingObjectSemanticAction($hav_con, E_AND, $hav_obj); }
             ;
 
 having_condition: 
@@ -340,28 +337,28 @@ having_condition:
             ;
 
 condition:
-            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str,NULL, $val); }
-            | operator COLON  value[val]                     { $$ = ConditionSemanticAction(NULL,$1, $3); }
+            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str,E_EQUALS, $val); }
+            | STRING[str] COLON LBRACE operator[op] COLON value[val] RBRACE                    { $$ = ConditionSemanticAction($str,$op, $val); }
             ;
 
 
 aggregate_function:
-                COUNT   { $$ = (AggFunc *) COUNT; }
-                | SUM   { $$ = (AggFunc *)  SUM; }
-                | AVG   { $$ = (AggFunc *)  AVG; }
-                | MAX   { $$ = (AggFunc *)  MAX; }
-                | MIN   { $$ = (AggFunc *) MIN; }
+                COUNT   { $$ = E_COUNT; }
+                | SUM   { $$ = E_SUM; }
+                | AVG   { $$ = E_AVG; }
+                | MAX   { $$ = E_MAX; }
+                | MIN   { $$ = E_MIN; }
                 ;   
 
 
 operator: 
-                EQUALS             {$$ = (Operator *) EQUALS; }
-                | GREATER_THAN     {$$ = (Operator *) GREATER_THAN; }
-                | LESS_THAN        {$$ = (Operator *) LESS_THAN; }
+                EQUALS             {$$ = E_EQUALS; }
+                | GREATER_THAN     {$$ = E_GREATER_THAN; }
+                | LESS_THAN        {$$ = E_LESS_THAN; }
                 ;
 
 value:
-            STRING                                   { $$ = StringValueSemanticAction($1); }
+            STRING                                   { $$ = StringValueSemanticAction($1);  }
             | INTEGER                                { $$ = IntegerValueSemanticAction($1); }
             | FLOAT                                  { $$ = FloatValueSemanticAction($1); }
             ;
@@ -381,8 +378,8 @@ string_list:
                 ;                                
 
 
-logical_op:     AND     { $$ = LogOpSemanticAction(AND); }
-                | OR    { $$ = LogOpSemanticAction(OR); }
+logical_op:     AND     { $$ = E_AND; }
+                | OR    { $$ = E_OR; }
                 ;          
 
 %%

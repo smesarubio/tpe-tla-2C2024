@@ -5,7 +5,8 @@
       "email": "new.email@example.com"
     },
     "WHERE": {
-      "id": 123
+      "id": 123, 
+      "email": "sss@ss.com"
     }
   }
 }

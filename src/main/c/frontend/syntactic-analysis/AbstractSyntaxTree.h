@@ -36,11 +36,6 @@ typedef struct Value Value;
 typedef struct Array Array;
 typedef struct ValueList ValueList;
 typedef struct Function Function;
-// typedef struct Integer Integer;
-// typedef struct Float Float;
-typedef struct LogOp LogOp;
-typedef struct AggFunc AggFunc;
-typedef struct Operator Operator;
 typedef struct Clause Clause;
 typedef struct InsertList InsertList;
 typedef struct Join Join;
@@ -58,9 +53,6 @@ typedef struct Factor Factor;
 typedef struct Program Program;
 
 typedef char * String;
-typedef int Integer;
-typedef float Float;
-
 
 /**
 
@@ -80,6 +72,33 @@ enum actionType {
     E_INSERT
 };
 
+
+enum OperatorType {
+    E_EQUALS,
+    E_GREATER_THAN,
+    E_LESS_THAN
+};
+
+enum LogOpType {
+    E_NOT,
+    E_AND,
+    E_OR, 
+    E_NONE
+};
+
+enum AggFuncType {
+    E_COUNT,
+    E_SUM,
+    E_AVG,
+    E_MAX,
+    E_MIN
+};
+
+typedef enum {
+    VALUE_TYPE_STRING,
+    VALUE_TYPE_INTEGER,
+    VALUE_TYPE_FLOAT
+} ValueType;
 
 struct JsonQuery {
     union {
@@ -194,11 +213,11 @@ struct WhereObject {
         } first;
         struct {
             Condition* condition;
-            LogOp* log_op;
+            LogOpType log_op;
             WhereObject* where_object;
         } second;
         struct {
-            LogOp* log_op;
+            LogOpType log_op;
             WhereObject* where_object;
         } third;
     } where_object_union;
@@ -211,11 +230,11 @@ struct HavingObject {
         } first;
         struct {
             HavingCondition* condition;
-            LogOp* log_op;
+            LogOpType log_op;
             HavingObject* having_object;
         } second;
         struct {
-            LogOp* log_op;
+            LogOpType log_op;
             HavingObject* having_object;
         } third;
     } having_object_union;
@@ -223,19 +242,19 @@ struct HavingObject {
 
 struct HavingCondition {
     String string;
-    AggFunc* aggregate_func;
-    Operator* operator;
+    AggFuncType aggregate_func;
+    OperatorType operator;
     Value* value;
 };
 
 struct Condition {
     String string;
-    Operator* operator;
+    OperatorType operator;
     Value* value;
-    // String value;
 };
 
 struct Value {
+    ValueType type;
     union {
         String string;
         int integer;
@@ -287,47 +306,6 @@ struct Join {
 };
 
 
-
-struct AggFunc {
-    AggFuncType* agg_func_value;
-};
-
-struct Operator {
-    OperatorType* operator_type;
-};
-
-struct LogOp {
-    LogOpType * log_op_type;
-};
-
-
-
-enum OperatorType {
-    E_EQUALS,
-    E_GREATER_THAN,
-    E_LESS_THAN
-};
-
-enum LogOpType {
-    E_NOT,
-    E_AND,
-    E_OR
-};
-
-enum AggFuncType {
-    E_COUNT,
-    E_SUM,
-    E_AVG,
-    E_MAX,
-    E_MIN
-};
-
-
-enum FactorType {
-    E_CONSTANT,
-    E_EXPRESSION
-};
-
 void releaseProgram(JsonQuery* program);
 
 void releaseInsertAction(InsertAction* insert_action);
@@ -335,14 +313,11 @@ void releaseArray(Array* array);
 void releaseSelectAction(SelectAction* select_action);
 void releaseWhereObject(WhereObject* where_object);
 void releaseCondition(Condition* condition);
-void releaseOperator(Operator* operator);
 void releaseValue(Value* value);
 void releaseJoin(Join* join);
 void releaseInsertList(InsertList* insert_list);
 void releaseHavingObject(HavingObject* having_object);
-void releaseLogOp(LogOp* log_op);
 void releaseHavingCondition(HavingCondition* having_condition);
-void releaseAggFunc(AggFunc* agg_func);
 void releaseValueList(ValueList* value_list);
 void releaseAction(Action *action);
 void releaseCreateAction(CreateAction *create_action);

@@ -295,22 +295,31 @@ void releaseSelectAction(SelectAction* select_action) {
 	free(select_action);
 }
 
-void releaseWhereObject(WhereObject* where_object) {
-	if (where_object == NULL) return;
+void releaseWhereObject(WhereObject *where_object) {
+    if (where_object == NULL) return;
 
-	if (where_object->where_object_union.second.where_object != NULL) {
-		releaseWhereObject(where_object->where_object_union.second.where_object);
-	}
-
-	if (where_object->where_object_union.second.log_op != NULL) {
-		releaseLogOp(where_object->where_object_union.second.log_op);
-	}
-
-	if (where_object->where_object_union.second.condition != NULL) {
-		releaseCondition(where_object->where_object_union.second.condition);
-	}
-
-	free(where_object);
+    // Release the first case: a single condition
+    if (where_object->where_object_union.first.condition != NULL) {
+        releaseCondition(where_object->where_object_union.first.condition);
+        where_object->where_object_union.first.condition = NULL;
+    }
+    // Release the second case: a condition, log_op, and nested where_object
+    if (where_object->where_object_union.second.condition != NULL) {
+        releaseCondition(where_object->where_object_union.second.condition);
+        where_object->where_object_union.second.condition = NULL;
+    }
+    if (where_object->where_object_union.second.where_object != NULL) {
+        releaseWhereObject(where_object->where_object_union.second.where_object);
+        where_object->where_object_union.second.where_object = NULL;
+    }
+    // TODO:
+    // Release the third case: only a log_op and nested where_object
+    // if (where_object->where_object_union.third.where_object != NULL) {
+    //     logCritical(_logger, "que hace aca");
+    //     releaseWhereObject(where_object->where_object_union.third.where_object);
+    //     where_object->where_object_union.third.where_object = NULL;
+    // }  
+    free(where_object);
 }
 
 void releaseCondition(Condition* condition) {
@@ -318,28 +327,12 @@ void releaseCondition(Condition* condition) {
 
 	free(condition->string);
 
-	if (condition->operator != NULL) {
-		releaseOperator(condition->operator);
-	}
-
-	if (condition->value != NULL) {
+	if (condition->value->type == VALUE_TYPE_STRING) {
 		releaseValue(condition->value);
 	}
-
 	free(condition);
 }
 
-void releaseOperator(Operator* operator) {
-	if (operator == NULL) {
-		return;
-	}
-
-	if (operator->operator_type != NULL) {
-		free(operator->operator_type);
-	}
-
-	free(operator);
-}
 
 void releaseValue(Value* value) {
 if (value == NULL) {
@@ -392,75 +385,29 @@ void releaseHavingObject(HavingObject* having_object) {
         releaseHavingCondition(having_object->having_object_union.first.condition);
     }
 
-    if (having_object->having_object_union.second.condition != NULL) {
-        releaseHavingCondition(having_object->having_object_union.second.condition);
-    }
+    // if (having_object->having_object_union.second.condition != NULL) {
+    //     releaseHavingCondition(having_object->having_object_union.second.condition);
+    // }
+    // if (having_object->having_object_union.second.having_object != NULL) {
+    //     releaseHavingObject(having_object->having_object_union.second.having_object);
+    // }
 
-    if (having_object->having_object_union.second.log_op != NULL) {
-        releaseLogOp(having_object->having_object_union.second.log_op);
-    }
-
-    if (having_object->having_object_union.second.having_object != NULL) {
-        releaseHavingObject(having_object->having_object_union.second.having_object);
-    }
-
-    if (having_object->having_object_union.third.log_op != NULL) {
-        releaseLogOp(having_object->having_object_union.third.log_op);
-    }
-
-    if (having_object->having_object_union.third.having_object != NULL) {
-        releaseHavingObject(having_object->having_object_union.third.having_object);
-    }
+    // if (having_object->having_object_union.third.having_object != NULL) {
+    //     releaseHavingObject(having_object->having_object_union.third.having_object);
+    // }
 
     free(having_object);
 }
 
-void releaseLogOp(LogOp* log_op) {
-	if (log_op == NULL) {
-		return;
-	}
-
-	if (log_op->log_op_type != NULL) {
-        free(log_op->log_op_type);
-    }
-
-    free(log_op);
-}
-
 void releaseHavingCondition(HavingCondition* having_condition) {
-	if (having_condition == NULL) {
-        return;
-    }
+	if (having_condition == NULL) return;
 
-    if (having_condition->string != NULL) {
-        free(having_condition->string);
-    }
+	free(having_condition->string);
 
-    if (having_condition->aggregate_func != NULL) {
-        releaseAggFunc(having_condition->aggregate_func);
-    }
-
-    if (having_condition->operator != NULL) {
-        releaseOperator(having_condition->operator);
-    }
-
-    if (having_condition->value != NULL) {
-        releaseValue(having_condition->value);
-    }
-
-    free(having_condition);
-}
-
-void releaseAggFunc(AggFunc* agg_func) {
-	if (agg_func == NULL) {
-		return;
+	if (having_condition->value->type == VALUE_TYPE_STRING) {
+		releaseValue(having_condition->value);
 	}
-
-	if (agg_func->agg_func_value != NULL) {
-        free(agg_func->agg_func_value);
-    }
-
-	free(agg_func);
+	free(having_condition);
 }
 
 void releaseValueList(ValueList* value_list) {

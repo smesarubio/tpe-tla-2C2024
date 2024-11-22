@@ -83,15 +83,22 @@ static void _generateValueList(ValueList * valueList) {
 }
 
 static void _generateValue(Value * value) {
-	if(value->values.string != NULL){
-		_output(0, "%s", value->values.string);
-	}
-	else if(value->values.integer != 0){
-		_output(0, "%d", value->values.integer);
-	}
-	else { 
-		_output(0, "%f", value->values.float_value);
-	}
+    switch (value->type) {
+        case VALUE_TYPE_STRING:
+            if (value->values.string != NULL) {
+                _output(0, "%s", value->values.string);
+            }
+            break;
+        case VALUE_TYPE_INTEGER:
+            _output(0, "%d", value->values.integer);
+            break;
+        case VALUE_TYPE_FLOAT:
+            _output(0, "%f", value->values.float_value);
+            break;
+        default:
+            logError(_logger, "Unknown value type");
+            break;
+    }
 }
 
 
@@ -120,7 +127,15 @@ static void _generateColumnList(ColumnList *columnList) {
 
 static void _generateColumnItem(ColumnItem *columnItem) {
     if (columnItem == NULL) return;
-    _output(0, "%s %s", removeQuotes(columnItem->left), removeQuotes(columnItem->right));
+
+    const char *typeStr = removeQuotes(columnItem->right);
+    if (strcmp(typeStr, "STRING") == 0) {
+        _output(0, "%s VARCHAR(40)", removeQuotes(columnItem->left));
+    } else if (strcmp(typeStr, "INTEGER") == 0) {
+        _output(0, "%s int", removeQuotes(columnItem->left));
+    } else {
+        _output(0, "%s %s", removeQuotes(columnItem->left), typeStr);
+    }
 }
 
 static void _generateDeleteAction(DeleteAction * deleteAction) {
@@ -134,10 +149,8 @@ static void _generateDeleteAction(DeleteAction * deleteAction) {
 	_output(0, ";\n");
 }
 
-static const char* _getLogOpString(LogOpType *logOpType) {
-    if (logOpType == NULL) return "AND";
-
-    switch (*logOpType) {
+static const char* _getLogOpString(LogOpType logOpType) {
+    switch (logOpType) {
         case E_NOT:
             return "NOT";
         case E_AND:
@@ -148,39 +161,33 @@ static const char* _getLogOpString(LogOpType *logOpType) {
             return "AND";
     }
 }
-
 static void _generateWhereObject(WhereObject *whereObject) {
     if (whereObject == NULL) return;
 
     // Handle the second union case
     if (whereObject->where_object_union.second.where_object != NULL) {
+        _output(0, "(");
         _generateCondition(whereObject->where_object_union.second.condition);
-
-        // Print the logical operator
-        if (whereObject->where_object_union.second.log_op != NULL) {
-            _output(0, " %s ", _getLogOpString(whereObject->where_object_union.second.log_op->log_op_type));
-        }
-
+        _output(0, " %s ", _getLogOpString(whereObject->where_object_union.second.log_op));
         _generateWhereObject(whereObject->where_object_union.second.where_object);
+        _output(0, ")");
     }
     // Handle the third union case
     else if (whereObject->where_object_union.third.where_object != NULL) {
-        // Print the logical operator
-        if (whereObject->where_object_union.third.log_op != NULL) {
-            _output(0, " %s ", _getLogOpString(whereObject->where_object_union.third.log_op->log_op_type));
-        }
-
+        _output(0, "(");
+        _output(0, " %s ", _getLogOpString(whereObject->where_object_union.third.log_op));
         _generateWhereObject(whereObject->where_object_union.third.where_object);
+        _output(0, ")");
     }
     // Handle the first union case (base case)
-    else {
+    else if (whereObject->where_object_union.first.condition != NULL) {
         _generateCondition(whereObject->where_object_union.first.condition);
     }
 }
-static const char* _getOperatorString(OperatorType *operatorType) {
-    if (operatorType == NULL) return "UNKNOWN";
 
-    switch (*operatorType) {
+static const char* _getOperatorString(OperatorType operatorType) {
+
+    switch (operatorType) {
         case E_EQUALS:
             return "=";
         case E_GREATER_THAN:
@@ -193,18 +200,9 @@ static const char* _getOperatorString(OperatorType *operatorType) {
 }
 
 static void _generateCondition(Condition *condition) {
-    if (condition == NULL) return;
-
-    if (condition->operator == NULL) {
-		// logCritical(_logger, "gen cond %s", condition->string);
-
-        // No operator, print only the string
-        _output(0, "%s = %d", removeQuotes(condition->string), condition->value);
-    } else {
-        // Print the condition with operator
-        _output(0, "%s %s ", removeQuotes(condition->string), _getOperatorString(condition->operator->operator_type));
-        _generateValue(condition->value);
-    }
+    _output(0, "%s", removeQuotes(condition->string));
+    _output(0, " %s ", _getOperatorString(condition->operator));
+    _generateValue(condition->value);
 }
 
 
@@ -218,7 +216,7 @@ static void _generateArray(Array *array) {
     }
 
     // Print the current column
-    _output(0, "%s", array->string_list_union.first.string);
+    _output(0, "%s", removeQuotes(array->string_list_union.first.string));
 }
 
 static void _generateInsertList(InsertList *insertList) {
@@ -268,6 +266,48 @@ static void _generateInsertAction(InsertAction *insertAction) {
     // End the statement
     _output(0, ";\n");
 }
+static void _generateHavingCondition(HavingCondition *havingCondition) {
+    if (havingCondition == NULL) return;
+
+    const char *aggFuncStr;
+    switch (havingCondition->aggregate_func) {
+        case E_COUNT:
+            aggFuncStr = "COUNT";
+            break;
+        case E_SUM:
+            aggFuncStr = "SUM";
+            break;
+        case E_AVG:
+            aggFuncStr = "AVG";
+            break;
+        case E_MAX:
+            aggFuncStr = "MAX";
+            break;
+        case E_MIN:
+            aggFuncStr = "MIN";
+            break;
+        default:
+            aggFuncStr = "";
+            break;
+    }
+
+    _output(0, "%s(%s)", aggFuncStr, removeQuotes(havingCondition->string));
+    _output(0, " %s ", _getOperatorString(havingCondition->operator));
+    _generateValue(havingCondition->value);
+}
+
+static void _generateHavingObject(HavingObject * HavingObject){
+    if(HavingObject->having_object_union.first.condition != NULL){
+        _generateHavingCondition(HavingObject->having_object_union.first.condition);
+    }
+    else{
+        _output(0, "(");
+        _generateHavingCondition(HavingObject->having_object_union.second.condition);
+        _output(0, " %s ", _getLogOpString(HavingObject->having_object_union.second.log_op));
+        _generateHavingObject(HavingObject->having_object_union.second.having_object);
+        _output(0, ")");
+    }
+}
 
 static void _generateSelectAction(SelectAction *selectAction) {
     _output(0, "SELECT ");
@@ -297,7 +337,7 @@ static void _generateSelectAction(SelectAction *selectAction) {
 
     if (selectAction->having_object != NULL) {
         _output(0, " HAVING ");
-        //_generateHavingObject(selectAction->having_object);
+        _generateHavingObject(selectAction->having_object);
     }
 
     if (selectAction->order_by_column_list != NULL) {

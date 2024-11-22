@@ -2,8 +2,8 @@
   "DELETE": {
     "FROM": "users",
     "WHERE": {
-      "id": "123", 
-      "name": "John Doe"
+      "id": 123, 
+      "salary": {"gt": 1000}
     }
   }
 }

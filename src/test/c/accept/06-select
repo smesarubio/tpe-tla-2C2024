@@ -2,9 +2,8 @@
   "SELECT": ["name", "salary"],
   "FROM": "employees",
   "WHERE": {
-    "department": "sales" ,
-    "gt": 1000,
-    "lt": 2000
+    "department": "sales",
+    "salary": {"gt": 1000}
   },
   "GROUP BY": ["department"],
   "ORDER BY": ["name"],
