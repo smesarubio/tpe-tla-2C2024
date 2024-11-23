@@ -31,10 +31,7 @@
     AddAction * add_action;
     UpdateAction * update_action;
     ColumnObject * column_object;
-    ColumnList * column_list;
-    ColumnItem * column_item;
-    UpdateList * update_list;
-    UpdateItems * update_items;
+    UpdateObject * update_object;
     WhereObject * where_object;
     HavingObject * having_object;
     Condition * condition;
@@ -73,6 +70,12 @@
 %destructor { releaseWhereObject($$); } <where_object>
 %destructor { releaseCondition($$); } <condition>
 %destructor { releaseValue($$); } <value>
+%destructor { releaseColumnObject($$); } <column_object>
+%destructor { releaseCreateAction($$); } <create_action>
+%destructor { releaseDeleteAction($$); } <delete_action>
+%destructor { releaseAddAction($$); } <add_action>
+%destructor { releaseUpdateObject($$); } <update_object>
+%destructor { releaseUpdateAction($$); } <update_action>
 %destructor { releaseInsertList($$); } <insert_list>
 %destructor { releaseHavingObject($$); } <having_object>
 %destructor { releaseHavingCondition($$); } <having_condition>
@@ -131,10 +134,7 @@
 %type <add_action> add_action
 %type <update_action> update_action
 %type <column_object> column_object
-%type <column_list> column_list
-%type <column_item> column_item
-%type <update_list> update_list
-%type <update_items> update_items
+%type <update_object> update_object
 %type <where_object> where_object
 %type <having_object> having_object
 %type <condition> condition
@@ -281,10 +281,13 @@ add_action:
 update_action:
                 LBRACE
                 UPDATE COLON LBRACE
-                TABLE COLON STRING COMMA
-                SET COLON update_list[upd_list] where_clause[where_obj]
+                TABLE COLON STRING[str] COMMA
+                SET COLON LBRACE 
+                update_object[upd_list] 
+                RBRACE 
+                where_clause[where_obj]
                 RBRACE
-                RBRACE                              { $$ = UpdateActionSemanticAction($7, $upd_list, $where_obj); }
+                RBRACE                              { $$ = UpdateActionSemanticAction($str, $upd_list, $where_obj); }
                 ;
 
 
@@ -294,27 +297,10 @@ column_object:
     ;
 
 
-column_list:
-                column_item                             { $$ = ColumnListSemanticAction($1, NULL); }
-                | column_list COMMA column_item         { $$ = ColumnListSemanticAction($3, $1); }
-                
+update_object:
+                condition[cond]                                  { $$ = UpdateObjectSemanticAction($cond, NULL); }
+                | condition[cond] COMMA update_object[upd_itmes]  { $$ = UpdateObjectSemanticAction($cond, $upd_itmes); }
                 ;
-
-column_item:
-                STRING COLON STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
-                |STRING COMMA STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
-                ;
-
-
-update_list:
-                LBRACE update_items[upd_items] RBRACE      { $$ = (UpdateList *) $upd_items; }
-                ;
-
-update_items:
-                STRING COLON value[val]                                  { $$ = UpdateItemSemanticAction($1, $val, NULL); }
-                | STRING COLON value[val] COMMA update_items[upd_itmes]  { $$ = UpdateItemSemanticAction($1, $val, $upd_itmes); }
-                ;
-
 
 where_object:
     condition[cond]

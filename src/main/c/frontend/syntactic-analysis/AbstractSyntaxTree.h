@@ -25,8 +25,7 @@ typedef struct UpdateAction UpdateAction;
 typedef struct ColumnObject ColumnObject;
 typedef struct ColumnList ColumnList;
 typedef struct ColumnItem ColumnItem;
-typedef struct UpdateList UpdateList;
-typedef struct UpdateItems UpdateItems;
+typedef struct UpdateObject UpdateObject;
 typedef struct StringList StringList;
 typedef struct WhereObject WhereObject;
 typedef struct HavingObject HavingObject;
@@ -162,7 +161,7 @@ struct AddAction {
 
 struct UpdateAction {
     String table_name;
-    UpdateList* update_list;
+    UpdateObject* update_object;
     WhereObject* where_object;
 };
 
@@ -187,24 +186,17 @@ struct ColumnItem {
     String right;
 };
 
-struct UpdateList {
-    UpdateItems* update_items;
-};
-
-struct UpdateItems {
+struct UpdateObject {
     union {
         struct {
-            String string;
-            Value* value;
+            Condition* condition;
         } first;
         struct {
-            String string;
-            Value* value;
-            UpdateItems* update_items;
-        } second;
+            Condition* condition;
+            UpdateObject* update_object;
+        } second;  
     } update_items_union;
 };
-
 
 struct WhereObject {
     union {
@@ -307,7 +299,7 @@ struct Join {
 
 
 void releaseProgram(JsonQuery* program);
-
+void releaseUpdateObject(UpdateObject* UpdateObject);
 void releaseInsertAction(InsertAction* insert_action);
 void releaseArray(Array* array);
 void releaseSelectAction(SelectAction* select_action);
@@ -327,7 +319,7 @@ void releaseUpdateAction(UpdateAction *update_action);
 void releaseColumnObject(ColumnObject *column_object);
 void releaseColumnList(ColumnList *column_list);
 void releaseColumnItem(ColumnItem *column_item);
-void releaseUpdateList(UpdateList *update_list);
-void releaseUpdateItems(UpdateItems *update_items);
+// void releaseUpdateList(UpdateList *update_list);
+// void releaseUpdateItems(UpdateObject *update_items);
 
 #endif

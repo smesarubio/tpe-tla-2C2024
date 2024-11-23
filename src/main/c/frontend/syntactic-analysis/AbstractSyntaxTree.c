@@ -34,7 +34,6 @@ void releaseProgram(JsonQuery *program) {
 }
 
 
-
 void releaseAction(Action *action) {
     if (action == NULL) return;
     switch (action->type) {
@@ -78,9 +77,9 @@ void releaseAction(Action *action) {
             logError(_logger, "Unknown action type: %d", action->type);
             break;
     }
-
     free(action);
 }
+
 
 void releaseCreateAction(CreateAction *create_action) {
     if (create_action == NULL) return;
@@ -122,14 +121,29 @@ void releaseAddAction(AddAction *add_action) {
     free(add_action);
     add_action = NULL; // Avoid dangling pointer
 }
+void releaseUpdateObject(UpdateObject* UpdateObject){
+    if (UpdateObject == NULL) return;
 
+    if (UpdateObject->update_items_union.first.condition != NULL) {
+        releaseCondition(UpdateObject->update_items_union.first.condition);
+    }
+
+    // if (UpdateObject->update_items_union.second.condition != NULL) {
+    //     releaseCondition(UpdateObject->update_items_union.second.condition);
+    // }
+
+    // if (UpdateObject->update_items_union.second.update_object != NULL) {
+    //     releaseUpdateObject(UpdateObject->update_items_union.second.update_object);
+    // }
+    free(UpdateObject);
+
+}
 
 void releaseUpdateAction(UpdateAction *update_action) {
     if (update_action == NULL) return;
-
     free(update_action->table_name);
-    if (update_action->update_list != NULL) {
-        releaseUpdateList(update_action->update_list);
+    if (update_action->update_object != NULL) {
+        releaseUpdateObject(update_action->update_object);
     }
     if (update_action->where_object != NULL) {
         releaseWhereObject(update_action->where_object);
@@ -193,29 +207,6 @@ void releaseColumnItem(ColumnItem *column_item) {
     column_item = NULL; // Avoid dangling pointer
 }
 
-
-
-void releaseUpdateList(UpdateList *update_list) {
-    if (update_list == NULL) return;
-    if (update_list->update_items != NULL) {
-        releaseUpdateItems(update_list->update_items);
-    }
-    free(update_list);
-}
-
-void releaseUpdateItems(UpdateItems *update_items) {
-    if (update_items == NULL) return;
-
-    if (update_items->update_items_union.second.update_items != NULL) {
-        releaseUpdateItems(update_items->update_items_union.second.update_items);
-    }
-
-    if (update_items->update_items_union.first.value != NULL) {
-        releaseValue(update_items->update_items_union.first.value);
-    }
-
-    free(update_items);
-}
 
 
 
@@ -323,7 +314,10 @@ void releaseWhereObject(WhereObject *where_object) {
 }
 
 void releaseCondition(Condition* condition) {
-	if (condition == NULL) return;
+	if (condition == NULL) {
+
+        return;
+    }
 
 	free(condition->string);
 
@@ -338,11 +332,9 @@ void releaseValue(Value* value) {
 if (value == NULL) {
 		return;
 	}
-
 	if (value->values.string != NULL) {
 		free(value->values.string);
 	}
-
 	free(value);
 }
 

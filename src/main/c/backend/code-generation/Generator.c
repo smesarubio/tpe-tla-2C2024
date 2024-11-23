@@ -68,7 +68,7 @@ static char* removeQuotes(const char* str) {
 
 
 static void _generateAddAction(AddAction * addAction) {
-	_output(0, "ALTER TABLE %s\n ADD (",removeQuotes(addAction->table_name));
+	_output(0, "ALTER TABLE %s\nADD (",removeQuotes(addAction->table_name));
 	_generateColumnObject(addAction->column_object);
 	_output(0, ");\n");
 
@@ -143,7 +143,7 @@ static void _generateDeleteAction(DeleteAction * deleteAction) {
 		_output(0, "DELETE FROM %s", removeQuotes(deleteAction->table_name));
 	}
 	else {
-		_output(0, "DELETE FROM %s WHERE ", removeQuotes(deleteAction->table_name));
+		_output(0, "DELETE FROM %s \nWHERE ", removeQuotes(deleteAction->table_name));
 		_generateWhereObject(deleteAction->where_object);
 	}
 	_output(0, ";\n");
@@ -254,7 +254,7 @@ static void _generateInsertAction(InsertAction *insertAction) {
     }
 
     // Print VALUES keyword
-    _output(0, "VALUES ");
+    _output(0, "\nVALUES ");
 
     // Generate the values list
     if (insertAction->value_list != NULL) {
@@ -321,27 +321,27 @@ static void _generateSelectAction(SelectAction *selectAction) {
     _output(0, " FROM %s", removeQuotes(selectAction->table_name));
 
     if (selectAction->join != NULL) {
-        _output(0, " JOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
+        _output(0, "\nJOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
                 removeQuotes(selectAction->join->cond1), removeQuotes(selectAction->join->cond2));
     }
 
     if (selectAction->where_objects != NULL) {
-        _output(0, " WHERE ");
+        _output(0, "\nWHERE ");
         _generateWhereObject(selectAction->where_objects);
     }
 
     if (selectAction->group_by_column_list != NULL) {
-        _output(0, " GROUP BY ");
+        _output(0, "\nGROUP BY ");
         _generateArray(selectAction->group_by_column_list);
     }
 
     if (selectAction->having_object != NULL) {
-        _output(0, " HAVING ");
+        _output(0, "\nHAVING ");
         _generateHavingObject(selectAction->having_object);
     }
 
     if (selectAction->order_by_column_list != NULL) {
-        _output(0, " ORDER BY ");
+        _output(0, "\nORDER BY ");
         _generateArray(selectAction->order_by_column_list);
     }
 
@@ -349,21 +349,21 @@ static void _generateSelectAction(SelectAction *selectAction) {
 }
 
 static void _generateUpdateAction(UpdateAction *updateAction) {
-    _output(0, "UPDATE %s SET ", removeQuotes(updateAction->table_name));
+    _output(0, "UPDATE %s \nSET ", removeQuotes(updateAction->table_name));
 
-    UpdateItems *updateItems = updateAction->update_list->update_items;
+    UpdateObject *updateItems = updateAction->update_object;
     while (updateItems != NULL) {
-        _output(0, "%s = ",removeQuotes( updateItems->update_items_union.first.string));
-        _generateValue(updateItems->update_items_union.first.value);
+        _output(0, "%s = ", removeQuotes(updateItems->update_items_union.first.condition->string));
+        _generateValue(updateItems->update_items_union.first.condition->value);
 
-        updateItems = updateItems->update_items_union.second.update_items;
+        updateItems = updateItems->update_items_union.second.update_object;
         if (updateItems != NULL) {
             _output(0, ", ");
         }
     }
 
     if (updateAction->where_object != NULL) {
-        _output(0, " WHERE ");
+        _output(0, "\nWHERE ");
         _generateWhereObject(updateAction->where_object);
     }
 
