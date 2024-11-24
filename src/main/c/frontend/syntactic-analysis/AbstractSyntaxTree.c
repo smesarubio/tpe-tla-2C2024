@@ -21,13 +21,14 @@ void releaseProgram(JsonQuery *program) {
     }
 
     logDebugging(_logger, "Releasing program actions");
-    if (program->query.action != NULL) {
-        releaseAction(program->query.action);
+    while(program->next != NULL) {
+        JsonQuery *next = program->next;
+        releaseAction(program->action);
+        free(program);
+        program = next;
     }
-    // if (program->query.node.action != NULL) {
-    //     releaseAction(program->query.node.action);
-    // }
     logDebugging(_logger, "Releasing program memory");
+    releaseAction(program->action);
     free(program);
 
     logDebugging(_logger, "Program successfully released");
@@ -106,37 +107,32 @@ void releaseDeleteAction(DeleteAction *delete_action) {
 void releaseAddAction(AddAction *add_action) {
     if (add_action == NULL) return;
 
-    // Free table_name if allocated
     if (add_action->table_name != NULL) {
         free(add_action->table_name);
-        add_action->table_name = NULL; // Prevent double free
+        add_action->table_name = NULL;
     }
 
-    // Release column_object if allocated
     if (add_action->column_object != NULL) {
         releaseColumnObject(add_action->column_object);
-        add_action->column_object = NULL; // Prevent double free
+        add_action->column_object = NULL; 
     }
 
     free(add_action);
-    add_action = NULL; // Avoid dangling pointer
+    add_action = NULL; 
 }
-void releaseUpdateObject(UpdateObject* UpdateObject){
-    if (UpdateObject == NULL) return;
 
-    if (UpdateObject->update_items_union.first.condition != NULL) {
-        releaseCondition(UpdateObject->update_items_union.first.condition);
+void releaseUpdateObject(UpdateObject* updateObject){
+    if (updateObject == NULL) return;
+
+    if (updateObject->condition != NULL) {
+        releaseCondition(updateObject->condition);
     }
 
-    // if (UpdateObject->update_items_union.second.condition != NULL) {
-    //     releaseCondition(UpdateObject->update_items_union.second.condition);
-    // }
+    if (updateObject->next != NULL) {
+        releaseUpdateObject(updateObject->next);
+    }
 
-    // if (UpdateObject->update_items_union.second.update_object != NULL) {
-    //     releaseUpdateObject(UpdateObject->update_items_union.second.update_object);
-    // }
-    free(UpdateObject);
-
+    free(updateObject);
 }
 
 void releaseUpdateAction(UpdateAction *update_action) {
@@ -155,14 +151,13 @@ void releaseUpdateAction(UpdateAction *update_action) {
 void releaseColumnObject(ColumnObject *column_object) {
     if (column_object == NULL) return;
 
-    // Release column_list if allocated
     if (column_object->column_list != NULL) {
         releaseColumnList(column_object->column_list);
-        column_object->column_list = NULL; // Prevent double free
+        column_object->column_list = NULL; 
     }
 
     free(column_object);
-    column_object = NULL; // Avoid dangling pointer
+    column_object = NULL; 
 }
 
 
@@ -170,62 +165,51 @@ void releaseColumnObject(ColumnObject *column_object) {
 void releaseColumnList(ColumnList *column_list) {
     if (column_list == NULL) return;
 
-    // Free current column_item
     if (column_list->columnListUnion.first.column_item != NULL) {
         releaseColumnItem(column_list->columnListUnion.first.column_item);
-        column_list->columnListUnion.first.column_item = NULL; // Prevent double free
+        column_list->columnListUnion.first.column_item = NULL; 
     }
 
-    // Recursively release the next column_list
     if (column_list->columnListUnion.second.column_list != NULL) {
         releaseColumnList(column_list->columnListUnion.second.column_list);
-        column_list->columnListUnion.second.column_list = NULL; // Prevent double free
+        column_list->columnListUnion.second.column_list = NULL;
     }
 
     free(column_list);
-    column_list = NULL; // Avoid dangling pointer
+    column_list = NULL; 
 }
-
 
 
 void releaseColumnItem(ColumnItem *column_item) {
     if (column_item == NULL) return;
 
-    // Free left string
     if (column_item->left != NULL) {
         free(column_item->left);
-        column_item->left = NULL; // Prevent double free
+        column_item->left = NULL;
     }
 
-    // Free right string
     if (column_item->right != NULL) {
         free(column_item->right);
-        column_item->right = NULL; // Prevent double free
+        column_item->right = NULL;
     }
 
     free(column_item);
-    column_item = NULL; // Avoid dangling pointer
+    column_item = NULL; 
 }
-
-
-
 
 void releaseInsertAction(InsertAction* insert_action) {
     if (insert_action == NULL) return;
 
-    // Free the table_name
     if (insert_action->table_name != NULL) {
         free(insert_action->table_name);
         insert_action->table_name = NULL;
     }
 
-    // Release the columns array
     if (insert_action->columns != NULL) {
         releaseArray(insert_action->columns);
         insert_action->columns = NULL;
     }
 
-    // Release the value list
     if (insert_action->value_list != NULL) {
         releaseInsertList(insert_action->value_list);
         insert_action->value_list = NULL;
@@ -237,19 +221,14 @@ void releaseInsertAction(InsertAction* insert_action) {
 
 void releaseArray(Array* array) {
     if (array == NULL) return;
-
-    // Free the nested array if it exists
     if (array->string_list_union.second.string_list != NULL) {
         releaseArray(array->string_list_union.second.string_list);
         array->string_list_union.second.string_list = NULL;
     }
-
-    // Free the current string
     if (array->string_list_union.first.string != NULL) {
         free(array->string_list_union.first.string);
         array->string_list_union.first.string = NULL;
     }
-
     free(array);
 }
 
@@ -289,12 +268,10 @@ void releaseSelectAction(SelectAction* select_action) {
 void releaseWhereObject(WhereObject *where_object) {
     if (where_object == NULL) return;
 
-    // Release the first case: a single condition
     if (where_object->where_object_union.first.condition != NULL) {
         releaseCondition(where_object->where_object_union.first.condition);
         where_object->where_object_union.first.condition = NULL;
     }
-    // Release the second case: a condition, log_op, and nested where_object
     if (where_object->where_object_union.second.condition != NULL) {
         releaseCondition(where_object->where_object_union.second.condition);
         where_object->where_object_union.second.condition = NULL;
@@ -303,24 +280,14 @@ void releaseWhereObject(WhereObject *where_object) {
         releaseWhereObject(where_object->where_object_union.second.where_object);
         where_object->where_object_union.second.where_object = NULL;
     }
-    // TODO:
-    // Release the third case: only a log_op and nested where_object
-    // if (where_object->where_object_union.third.where_object != NULL) {
-    //     logCritical(_logger, "que hace aca");
-    //     releaseWhereObject(where_object->where_object_union.third.where_object);
-    //     where_object->where_object_union.third.where_object = NULL;
-    // }  
     free(where_object);
 }
 
 void releaseCondition(Condition* condition) {
 	if (condition == NULL) {
-
         return;
     }
-
 	free(condition->string);
-
 	if (condition->value->type == VALUE_TYPE_STRING) {
 		releaseValue(condition->value);
 	}
@@ -351,43 +318,33 @@ void releaseJoin(Join* join) {
 
 void releaseInsertList(InsertList* insert_list) {
     if (insert_list == NULL) return;
-
-    // Release the current value list
     if (insert_list->first.value_list != NULL) {
         releaseValueList(insert_list->first.value_list);
         insert_list->first.value_list = NULL;
     }
-
-    // Recursively release the next list
     if (insert_list->second.list != NULL) {
         releaseInsertList(insert_list->second.list);
         insert_list->second.list = NULL;
     }
-
     free(insert_list);
 }
 
 
 void releaseHavingObject(HavingObject* having_object) {
-	if (having_object == NULL) {
-        return;
-    }
+    if (having_object == NULL) return;
 
     if (having_object->having_object_union.first.condition != NULL) {
         releaseHavingCondition(having_object->having_object_union.first.condition);
+        having_object->having_object_union.first.condition = NULL;
     }
-
-    // if (having_object->having_object_union.second.condition != NULL) {
-    //     releaseHavingCondition(having_object->having_object_union.second.condition);
-    // }
-    // if (having_object->having_object_union.second.having_object != NULL) {
-    //     releaseHavingObject(having_object->having_object_union.second.having_object);
-    // }
-
-    // if (having_object->having_object_union.third.having_object != NULL) {
-    //     releaseHavingObject(having_object->having_object_union.third.having_object);
-    // }
-
+    if (having_object->having_object_union.second.condition != NULL) {
+        releaseHavingCondition(having_object->having_object_union.second.condition);
+        having_object->having_object_union.second.condition = NULL;
+    }
+    if (having_object->having_object_union.second.having_object != NULL) {
+        releaseHavingObject(having_object->having_object_union.second.having_object);
+        having_object->having_object_union.second.having_object = NULL;
+    }
     free(having_object);
 }
 
@@ -405,13 +362,10 @@ void releaseHavingCondition(HavingCondition* having_condition) {
 void releaseValueList(ValueList* value_list) {
     if (value_list == NULL) return;
 
-    // Release the current value
     if (value_list->value_list_union.first.value != NULL) {
-        free(value_list->value_list_union.first.value); // Assuming Value is dynamically allocated
         value_list->value_list_union.first.value = NULL;
     }
 
-    // Recursively release the next value list
     if (value_list->value_list_union.second.value_list != NULL) {
         releaseValueList(value_list->value_list_union.second.value_list);
         value_list->value_list_union.second.value_list = NULL;

@@ -126,6 +126,7 @@
 
 /** Non-terminals. */
 %type <json_query> json_query
+%type <json_query> action_list
 %type <action> action
 %type <insert_action> insert_action
 %type <create_action> create_action
@@ -174,8 +175,21 @@
 
 
 
-json_query:     action[act]                                 { $$ = JsonQuerySemanticAction( currentCompilerState(), $act, NULL);}
-                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction(currentCompilerState(), $act, $query);}
+json_query:
+    BRACKET_OPEN action_list[act_list] BRACKET_CLOSE {
+        $$ = $act_list; 
+    }
+    ;
+
+action_list:
+    action[act] {
+        $$ = JsonQuerySemanticAction(currentCompilerState(), $act, NULL);
+    }
+    | action[act] COMMA action_list[act_list] {
+        $$ = JsonQuerySemanticAction(currentCompilerState(), $act, $act_list);
+    }
+    ;
+
 
 action: create_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_CREATE; $$->actions.create_action = $1; }
       | select_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_SELECT; $$->actions.select_action = $1; }
@@ -244,7 +258,7 @@ where_clause:
     COMMA WHERE COLON LBRACE where_object[where_obj] RBRACE
         { $$ = $where_obj; }
     | COMMA WHERE COLON LBRACE logical_op[log_op] COLON LBRACE condition[c1] COMMA condition[c2] RBRACE RBRACE
-        { $$ = WhereObjectSemanticAction($c1, $log_op, (WhereObject*)$c2); }
+        {  WhereObject *firstWhereObject = WhereObjectSemanticAction($c2, 0, NULL); $$ = WhereObjectSemanticAction($c1, $log_op, firstWhereObject); }
     ;
 
 

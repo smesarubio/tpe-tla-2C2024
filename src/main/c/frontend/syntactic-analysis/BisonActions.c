@@ -30,27 +30,28 @@ static void _logSyntacticAnalyzerAction(const char * functionName) {
 	logDebugging(_logger, "%s", functionName);
 }
 
-JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action * action, JsonQuery *jsonQuery)
-{
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
+JsonQuery *JsonQuerySemanticAction(CompilerState *compilerState, Action *action, JsonQuery *jsonQuery) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
 
-	if(jsonQuery == NULL){
-		newQuery->query.action = action;
+    JsonQuery *newQuery = calloc(1, sizeof(JsonQuery));
+    if (newQuery == NULL) {
+        logError(_logger, "Failed to allocate memory for JsonQuery");
+        compilerState->succeed = false;
+        return NULL;
+    }
 
-	} else {
-		newQuery->query.node.action= action;
-		newQuery->query.node.json_query = jsonQuery;
-	}
-	if (0 < flexCurrentContext()) {
-		logError(_logger, "The final context is not the default (0): %d", flexCurrentContext());
-		compilerState->succeed = false;
-	}
-	else {
-		compilerState->succeed = true;
-	}	
-	compilerState->abstractSyntaxtTree = newQuery;
-	return newQuery;
+    newQuery->action = action;
+    newQuery->next = jsonQuery;
+
+    if (flexCurrentContext() != 0) {
+        logError(_logger, "The final context is not the default (0): %d", flexCurrentContext());
+        compilerState->succeed = false;
+    } else {
+        compilerState->succeed = true;
+    }
+    compilerState->abstractSyntaxtTree = newQuery;
+
+    return newQuery;
 }
 
 InsertAction * InsertActionSemanticAction(String table_name, Array* columns, InsertList* value_list){
@@ -121,7 +122,6 @@ SelectAction* SelectActionSemanticAction(Array* table_column_list, String table_
 ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type, ColumnObject *next) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
 
-    // Create a new ColumnItem for the current column
     ColumnItem *newItem = calloc(1, sizeof(ColumnItem));
     if (newItem == NULL) {
         logError(_logger, "Failed to allocate memory for ColumnItem");
@@ -130,7 +130,6 @@ ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type,
     newItem->left = column_name;
     newItem->right = column_type;
 
-    // Create a new ColumnList entry
     ColumnList *newList = calloc(1, sizeof(ColumnList));
     if (newList == NULL) {
         logError(_logger, "Failed to allocate memory for ColumnList");
@@ -139,12 +138,10 @@ ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type,
     }
     newList->columnListUnion.first.column_item = newItem;
 
-    // Link to the next column (if exists)
     if (next != NULL) {
         newList->columnListUnion.second.column_list = next->column_list;
     }
 
-    // Create a new ColumnObject to hold the list
     ColumnObject *newColumnObject = calloc(1, sizeof(ColumnObject));
     if (newColumnObject == NULL) {
         logError(_logger, "Failed to allocate memory for ColumnObject");
@@ -153,7 +150,6 @@ ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type,
         return NULL;
     }
     newColumnObject->column_list = newList;
-
     return newColumnObject;
 }
 
@@ -181,74 +177,65 @@ ColumnItem * ColumnItemSemanticAction(String left, String right){
 }
 
 UpdateObject *UpdateObjectSemanticAction(Condition *condition, UpdateObject *update_object) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    // Allocate memory for a new UpdateObject
-    UpdateObject *newUpdateObject = calloc(1, sizeof(UpdateObject));
-    if (newUpdateObject == NULL) {
-        logError(_logger, "Failed to allocate memory for UpdateObject");
-        return NULL;
-    }
-
-    // If this is the first condition in the list
-    if (update_object == NULL) {
-        newUpdateObject->update_items_union.first.condition = condition;
-        newUpdateObject->update_items_union.first.condition->operator = E_EQUALS;
-		// newUpdateObject->update_items_union.second.condition = NULL;
-    } 
-    // If this is part of a linked list of UpdateObjects
-    else {
-        newUpdateObject->update_items_union.second.condition = condition;
-        newUpdateObject->update_items_union.second.condition->operator = E_EQUALS;
-        newUpdateObject->update_items_union.second.update_object = update_object;
-    }
-
-    return newUpdateObject;
+	UpdateObject *newUpdateObject = calloc(1, sizeof(UpdateObject));
+	if (newUpdateObject == NULL) {
+		logError(_logger, "Failed to allocate memory for UpdateObject");
+		return NULL;
+	}
+	newUpdateObject->condition = condition;
+	newUpdateObject->condition->operator = E_EQUALS;
+	newUpdateObject->next = update_object;
+	return newUpdateObject;
 }
-
 
 
 WhereObject *WhereObjectSemanticAction(Condition *condition, LogOpType logical_op, WhereObject *where_object) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
-
-    // Allocate memory for the new WhereObject
     WhereObject *newWhereObject = calloc(1, sizeof(WhereObject));
     if (newWhereObject == NULL) {
         logError(_logger, "Failed to allocate memory for WhereObject");
         return NULL;
     }
-    // If a condition is provided, it's the "first" case
     if (condition != NULL && where_object == NULL) {
-        logDebugging(_logger, "Creating WhereObject for single condition");
         newWhereObject->where_object_union.first.condition = condition;
     }
-    // If a condition and logical operator are provided, it's the "second" case
-    else if (where_object != NULL) {
-        logDebugging(_logger, "Creating WhereObject for compound condition");
+    else if (condition != NULL && where_object != NULL) {
         newWhereObject->where_object_union.second.condition = condition;
         newWhereObject->where_object_union.second.log_op = logical_op;
         newWhereObject->where_object_union.second.where_object = where_object;
+    } else {
+        logError(_logger, "Invalid parameters for WhereObjectSemanticAction");
+        free(newWhereObject);
+        return NULL;
     }
-    // If only a logical operator and a nested WhereObject are provided, it's the "third" case
-    else if (condition == NULL && where_object != NULL && logical_op == E_NOT) {
-        newWhereObject->where_object_union.third.log_op = logical_op;
-        newWhereObject->where_object_union.third.where_object = where_object;
-    }
-	
     return newWhereObject;
 }
 
 
-HavingObject * HavingObjectSemanticAction(HavingCondition* having_condition, LogOpType logical_op, HavingObject* having_object){
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	HavingObject * newHavingObject = calloc(1, sizeof(HavingObject));
 
-	if(having_object == NULL){
-		newHavingObject->having_object_union.first.condition = having_condition;
-	} else {
-		newHavingObject->having_object_union.second.condition = having_condition;
-		newHavingObject->having_object_union.second.having_object = having_object;
-		newHavingObject->having_object_union.second.log_op = logical_op;
+
+HavingObject *HavingObjectSemanticAction(HavingCondition *having_condition, LogOpType logical_op, HavingObject *having_object) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+
+	HavingObject *newHavingObject = calloc(1, sizeof(HavingObject));
+	if (newHavingObject == NULL) {
+		logError(_logger, "Failed to allocate memory for HavingObject");
+		return NULL;
 	}
+
+	if (having_condition != NULL && having_object == NULL) {
+		newHavingObject->having_object_union.first.condition = having_condition;
+	}
+	else if (having_condition != NULL && having_object != NULL) {
+		newHavingObject->having_object_union.second.condition = having_condition;
+		newHavingObject->having_object_union.second.log_op = logical_op;
+		newHavingObject->having_object_union.second.having_object = having_object;
+	} else {
+		logError(_logger, "Invalid parameters for HavingObjectSemanticAction");
+		free(newHavingObject);
+		return NULL;
+	}
+
 	return newHavingObject;
 }
 

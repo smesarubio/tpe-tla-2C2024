@@ -100,18 +100,16 @@
 #include <string.h>
 #include "SymbolTable.h"
 
-// Create a new symbol table
 SymbolTable* createSymbolTable() {
     SymbolTable *symbolTable = (SymbolTable *)malloc(sizeof(SymbolTable));
     if (!symbolTable) {
         printf("Error: Failed to allocate memory for SymbolTable.\n");
         return NULL;
     }
-    symbolTable->count = 0; // Initialize count of symbols
+    symbolTable->count = 0; 
     return symbolTable;
 }
 
-// Add a symbol to the symbol table
 void addSymbol(SymbolTable *symbolTable, char *name, char *type, void *value) {
     if (symbolTable->count >= SYMBOL_TABLE_SIZE) {
         printf("Symbol table is full, cannot add more symbols.\n");
@@ -126,7 +124,6 @@ void addSymbol(SymbolTable *symbolTable, char *name, char *type, void *value) {
     printf("Added symbol: %s, Type: %s\n", name, type);
 }
 
-// Find a symbol in the symbol table
 Symbol* findSymbol(SymbolTable *symbolTable, char *name) {
     for (int i = 0; i < symbolTable->count; i++) {
         if (strcmp(symbolTable->table[i].name, name) == 0) {
@@ -136,7 +133,6 @@ Symbol* findSymbol(SymbolTable *symbolTable, char *name) {
     return NULL;
 }
 
-// Update a symbol in the symbol table
 void updateSymbol(SymbolTable *symbolTable, char *name, char *type, void *value) {
     Symbol *symbol = findSymbol(symbolTable, name);
     if (symbol) {
@@ -150,7 +146,6 @@ void updateSymbol(SymbolTable *symbolTable, char *name, char *type, void *value)
     }
 }
 
-// Print the symbol table (for debugging)
 void printSymbolTable(SymbolTable *symbolTable) {
     for (int i = 0; i < symbolTable->count; i++) {
         Symbol *symbol = &symbolTable->table[i];
@@ -159,7 +154,6 @@ void printSymbolTable(SymbolTable *symbolTable) {
     }
 }
 
-// Clean up the symbol table
 void freeSymbolTable(SymbolTable *symbolTable) {
     for (int i = 0; i < symbolTable->count; i++) {
         Symbol *symbol = &symbolTable->table[i];

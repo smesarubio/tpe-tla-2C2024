@@ -100,13 +100,8 @@ typedef enum {
 } ValueType;
 
 struct JsonQuery {
-    union {
-        Action* action;
-        struct {
-            Action* action;
-            struct JsonQuery* json_query;
-        } node;
-    } query;
+    Action* action;
+    struct JsonQuery* next;
 };
 
 struct Action {
@@ -187,15 +182,8 @@ struct ColumnItem {
 };
 
 struct UpdateObject {
-    union {
-        struct {
-            Condition* condition;
-        } first;
-        struct {
-            Condition* condition;
-            UpdateObject* update_object;
-        } second;  
-    } update_items_union;
+    Condition* condition;
+    UpdateObject* next;
 };
 
 struct WhereObject {
@@ -208,10 +196,6 @@ struct WhereObject {
             LogOpType log_op;
             WhereObject* where_object;
         } second;
-        struct {
-            LogOpType log_op;
-            WhereObject* where_object;
-        } third;
     } where_object_union;
 };
 
@@ -225,10 +209,6 @@ struct HavingObject {
             LogOpType log_op;
             HavingObject* having_object;
         } second;
-        struct {
-            LogOpType log_op;
-            HavingObject* having_object;
-        } third;
     } having_object_union;
 };
 
@@ -319,7 +299,5 @@ void releaseUpdateAction(UpdateAction *update_action);
 void releaseColumnObject(ColumnObject *column_object);
 void releaseColumnList(ColumnList *column_list);
 void releaseColumnItem(ColumnItem *column_item);
-// void releaseUpdateList(UpdateList *update_list);
-// void releaseUpdateItems(UpdateObject *update_items);
 
 #endif

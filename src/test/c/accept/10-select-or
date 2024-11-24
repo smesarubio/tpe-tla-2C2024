@@ -4,7 +4,7 @@
     "WHERE": {
         "OR": {
             "department": "sales",
-            "gt": 1000
+            "salary": {"gt": 1000}
         }
     }
 }
