@@ -2,8 +2,8 @@
 
 cd script/ubuntu
 ./build.sh
-# ./start.sh /home/katia/Documents/ITBA/tpe-tla-2C2024/src/test/c/accept/05-update
-./start.sh /home/katia/Documents/ITBA/tpe-tla-2C2024/src/test/c/accept/12-test-program "$@" | grep -v "DEBUG"| sed '/^$/d' 
+./start.sh /home/katia/Documents/ITBA/tpe-tla-2C2024/src/test/c/accept/05-update
+# ./start.sh /home/katia/Documents/ITBA/tpe-tla-2C2024/src/test/c/accept/12-test-program "$@" | grep -v "DEBUG"| sed '/^$/d' 
 # ./test.sh
 # #!/bin/bash
 

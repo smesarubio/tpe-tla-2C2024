@@ -177,6 +177,8 @@
 json_query:
     BRACKET_OPEN action_list[act_list] BRACKET_CLOSE {
         $$ = $act_list; 
+    }| action[act] {
+        $$ = JsonQuerySemanticAction(currentCompilerState(), $act, NULL);
     }
     ;
 
