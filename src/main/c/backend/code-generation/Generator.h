@@ -5,6 +5,7 @@
 #include "../../shared/CompilerState.h"
 #include "../../shared/Logger.h"
 #include "../../shared/String.h"
+#include "../../shared/Type.h"
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -13,6 +14,13 @@ void initializeGeneratorModule();
 
 /** Shutdown module's internal state. */
 void shutdownGeneratorModule();
+
+typedef struct {
+	boolean succeed;
+	char *sql;
+} ComputationResult;
+
+ComputationResult computeJson(JsonQuery *json_query);
 
 /**
  * Generates the final output using the current compiler state.

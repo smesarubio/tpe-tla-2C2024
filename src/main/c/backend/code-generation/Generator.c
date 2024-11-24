@@ -16,6 +16,9 @@ void shutdownGeneratorModule() {
 	}
 }
 
+ComputationResult result = { .succeed = true, .sql = NULL };
+
+
 /** PRIVATE FUNCTIONS */
 
 static const char _expressionTypeToCharacter(const ExpressionType type);
@@ -58,10 +61,13 @@ static char* removeQuotes(const char* str) {
 
 
 static void _generateAddAction(AddAction * addAction) {
-	_output(0, "ALTER TABLE %s\nADD (",removeQuotes(addAction->table_name));
-	_generateColumnObject(addAction->column_object);
-	_output(0, ");\n");
-
+    char buffer[1024];
+    logCritical(_logger, "ESTOY ACA");
+    snprintf(buffer, sizeof(buffer), "ALTER TABLE %s\nADD (", removeQuotes(addAction->table_name));
+    strcpy(result.sql, buffer);
+    logCritical(_logger, "ESTOY ACA 2");
+    _generateColumnObject(addAction->column_object);
+    result.sql = strcat(result.sql, ");\n");
 }
 
 static void _generateValueList(ValueList * valueList) {
@@ -93,10 +99,12 @@ static void _generateValue(Value * value) {
 
 
 static void _generateCreateAction(CreateAction * createAction) {
-	logDebugging(_logger, "Generate action");
-	_output(0, "CREATE TABLE %s (", removeQuotes(createAction->table_name));
-	_generateColumnObject(createAction->column_object);
-	_output(0, ");\n");
+    logDebugging(_logger, "Generate action");
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "CREATE TABLE %s (", removeQuotes(createAction->table_name));
+    result.sql = strcat(result.sql, buffer);
+    _generateColumnObject(createAction->column_object);
+    result.sql = strcat(result.sql, ");\n");
 }
 
 static void _generateColumnObject(ColumnObject *columnObject) {
@@ -110,22 +118,23 @@ static void _generateColumnList(ColumnList *columnList) {
     _generateColumnItem(columnList->columnListUnion.first.column_item);
 
     if (columnList->columnListUnion.second.column_list != NULL) {
-        _output(0, ", ");
+        strcat(result.sql, ", ");
         _generateColumnList(columnList->columnListUnion.second.column_list);
     }
 }
 
 static void _generateColumnItem(ColumnItem *columnItem) {
     if (columnItem == NULL) return;
-
     const char *typeStr = removeQuotes(columnItem->right);
+    char buffer[256];
     if (strcmp(typeStr, "STRING") == 0) {
-        _output(0, "%s VARCHAR(40)", removeQuotes(columnItem->left));
+        snprintf(buffer, sizeof(buffer), "%s VARCHAR(40)", removeQuotes(columnItem->left));
     } else if (strcmp(typeStr, "INTEGER") == 0) {
-        _output(0, "%s int", removeQuotes(columnItem->left));
+        snprintf(buffer, sizeof(buffer), "%s int", removeQuotes(columnItem->left));
     } else {
-        _output(0, "%s %s", removeQuotes(columnItem->left), typeStr);
+        snprintf(buffer, sizeof(buffer), "%s %s", removeQuotes(columnItem->left), typeStr);
     }
+    result.sql = strcat(result.sql, buffer);
 }
 
 static void _generateDeleteAction(DeleteAction * deleteAction) {
@@ -417,4 +426,9 @@ void generate(CompilerState * compilerState) {
 	_generateSQL(compilerState->abstractSyntaxtTree);
 	// _generateEpilogue(compilerState->sql);
 	logDebugging(_logger, "Generation is done.");
+}
+
+ComputationResult computeJson(JsonQuery * json_query) {
+    logDebugging(_logger, "Computing JSON...");
+    return result;
 }

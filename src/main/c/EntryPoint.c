@@ -41,8 +41,8 @@ const int main(const int count, const char ** arguments) {
 		// Beginning of the Backend... ------------------------------------------------------------
 		logDebugging(logger, "Computing expression value...");
 		JsonQuery * program = compilerState.abstractSyntaxtTree;
-		//ComputationResult computationResult = computeExpression(program->expression);
-		if (true) {
+		ComputationResult computationResult = computeJson(program);
+		if (computationResult.succeed) {
 			//compilerState.value = computationResult.value;
 			
 			generate(&compilerState);
