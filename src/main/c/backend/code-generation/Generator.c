@@ -446,7 +446,8 @@ static void _output(const unsigned int indentationLevel, const char * const form
 void generate(CompilerState * compilerState) {
 	logDebugging(_logger, "Generating final output...");
 	// _generatePrologue();
-	_generateSQL(compilerState->abstractSyntaxtTree);
+    _output(0, "%s", result.sql);
+	// _generateSQL(compilerState->abstractSyntaxtTree);
 	// _generateEpilogue(compilerState->sql);
 	logDebugging(_logger, "Generation is done.");
 }

@@ -45,10 +45,8 @@ const int main(const int count, const char ** arguments) {
 		ComputationResult computationResult = computeJson(program);
 
 		if (computationResult.succeed) {
-			//compilerState.value = computationResult.value;
-			logDebugging(logger, "compilationStatus succeed");
-			//generate(&compilerState);
-			logDebugging(logger, "%s", computationResult.sql);
+			compilerState.sql = computationResult.sql;
+			generate(&compilerState);
 		}
 		else {
 			logError(logger, "The computation phase rejects the input program.");
