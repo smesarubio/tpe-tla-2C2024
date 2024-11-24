@@ -430,5 +430,7 @@ void generate(CompilerState * compilerState) {
 
 ComputationResult computeJson(JsonQuery * json_query) {
     logDebugging(_logger, "Computing JSON...");
+    result.sql = (char*)malloc(1024);
+    _generateSQL(json_query);
     return result;
 }

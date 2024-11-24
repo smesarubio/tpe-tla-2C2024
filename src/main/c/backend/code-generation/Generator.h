@@ -17,7 +17,7 @@ void shutdownGeneratorModule();
 
 typedef struct {
 	boolean succeed;
-	char *sql;
+	char * sql;
 } ComputationResult;
 
 ComputationResult computeJson(JsonQuery *json_query);

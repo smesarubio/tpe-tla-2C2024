@@ -35,4 +35,6 @@ script/ubuntu/test.sh
 script/ubuntu/start.sh <program>
 ```
 
+script/ubuntu/start.sh 
+
 Replace `<program>` with a path to the program file.

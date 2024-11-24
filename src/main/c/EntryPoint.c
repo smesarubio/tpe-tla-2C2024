@@ -37,15 +37,18 @@ const int main(const int count, const char ** arguments) {
 	const SyntacticAnalysisStatus syntacticAnalysisStatus = parse(&compilerState);
 	CompilationStatus compilationStatus = SUCCEED;
 	if (syntacticAnalysisStatus == ACCEPT) {
+		logDebugging(logger, "Entro al if de syntacticAnalysisStatus");
 		// ----------------------------------------------------------------------------------------
 		// Beginning of the Backend... ------------------------------------------------------------
 		logDebugging(logger, "Computing expression value...");
 		JsonQuery * program = compilerState.abstractSyntaxtTree;
 		ComputationResult computationResult = computeJson(program);
+
 		if (computationResult.succeed) {
 			//compilerState.value = computationResult.value;
-			
-			generate(&compilerState);
+			logDebugging(logger, "compilationStatus succeed");
+			//generate(&compilerState);
+			logDebugging(logger, "EEEE%s", compilerState.sql);
 		}
 		else {
 			logError(logger, "The computation phase rejects the input program.");
