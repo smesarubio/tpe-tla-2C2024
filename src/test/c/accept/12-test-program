@@ -101,7 +101,8 @@
   "JOIN": {
       "departments": {
           "ON": {
-              "employees.department_id": "departments.id"
+              "employees.department_id": "departments.id",
+              "departments.department_name": "sales"
           }
       }
   }

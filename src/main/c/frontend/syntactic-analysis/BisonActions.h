@@ -37,7 +37,7 @@ HavingCondition* HavingConditionSemanticAction(AggFuncType agg_func, String stri
 Clause * ClauseSemanticAction(WhereObject* where_object, Array* group_by_column_list, Array* order_by_column_list, HavingObject* having_object);
 InsertList * SimpleInsertListSemanticAction(ValueList* value_list);
 InsertList * MultipleInsertListSemanticAction(ValueList* value_list, InsertList* list);
-Join * JoinSemanticAction(String table_name1, String table_name2, String cond1, String cond2);
+Join * JoinSemanticAction(String table_name1, String table_name2, Condition* cond1, Condition* cond2);
 ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type, ColumnObject *next) ;
 
 #endif

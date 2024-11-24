@@ -228,10 +228,10 @@ select_action:
     |
     LBRACE SELECT COLON BRACKET_OPEN string_list[col_list] BRACKET_CLOSE COMMA
     FROM  COLON STRING[str] 
-    COMMA JOIN COLON LBRACE STRING[str2] COLON LBRACE ON COLON LBRACE STRING[cond1] COLON STRING[cond2] RBRACE RBRACE RBRACE
+    COMMA JOIN COLON LBRACE STRING[str2] COLON LBRACE ON COLON LBRACE condition[cond1] COMMA condition[cond2] RBRACE RBRACE RBRACE
     clause[clause_block]
     RBRACE
-        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object, JoinSemanticAction($str2, $str, $cond1, $cond2)); }
+        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object, JoinSemanticAction($str, $str2, $cond1, $cond2)); }
     |
     LBRACE SELECT COLON all COMMA FROM COLON STRING[str] RBRACE
         { $$ = SelectAllActionSemanticAction($str); }

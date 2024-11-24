@@ -335,7 +335,7 @@ Clause * ClauseSemanticAction(WhereObject* where_object, Array* group_by_column_
 	return newClause;
 }
 
-Join * JoinSemanticAction(String table_name1, String table_name2, String cond1, String cond2){
+Join * JoinSemanticAction(String table_name1, String table_name2, Condition* cond1, Condition* cond2){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Join * newJoin = calloc(1, sizeof(Join));
 	newJoin->table_name1 = table_name1;

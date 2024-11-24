@@ -272,8 +272,8 @@ struct ValueList {
 struct Join {
     String table_name1;
     String table_name2;
-    String cond1;
-    String cond2;
+    Condition* cond1;
+    Condition* cond2;
 };
 
 

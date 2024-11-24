@@ -307,12 +307,8 @@ if (value == NULL) {
 
 void releaseJoin(Join* join) {
 	if (join == NULL) return;
-
-	free(join->table_name1);
-	free(join->table_name2);
-	free(join->cond1);
-	free(join->cond2);
-
+	releaseCondition(join->cond1);
+	releaseCondition(join->cond2);
 	free(join);
 }
 

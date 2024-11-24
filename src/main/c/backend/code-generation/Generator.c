@@ -16,7 +16,7 @@ void shutdownGeneratorModule() {
 	}
 }
 
-ComputationResult result = { .succeed = true, .sql = NULL };
+ComputationResult result = { .succeed = false, .sql = NULL };
 
 
 /** PRIVATE FUNCTIONS */
@@ -312,13 +312,15 @@ static void _generateSelectAction(SelectAction *selectAction) {
         strcat(result.sql, "*");
     }
 
-    snprintf(buffer, sizeof(buffer), " FROM %s", removeQuotes(selectAction->table_name));
+    snprintf(buffer, sizeof(buffer), " FROM %s ", removeQuotes(selectAction->table_name));
     strcat(result.sql, buffer);
 
     if (selectAction->join != NULL) {
-        snprintf(buffer, sizeof(buffer), "\nJOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
-                removeQuotes(selectAction->join->cond1), removeQuotes(selectAction->join->cond2));
+        snprintf(buffer, sizeof(buffer), "\nJOIN %s ON ", removeQuotes(selectAction->join->table_name2));
         strcat(result.sql, buffer);
+        _generateCondition(selectAction->join->cond1);
+        strcat(result.sql, " AND ");
+        _generateCondition(selectAction->join->cond2);
     }
 
     if (selectAction->where_objects != NULL) {
@@ -404,6 +406,7 @@ static void _generateAction(Action * action){
             logError(_logger, "Tipo de acción desconocido: %d", action->type);
             break;
         }
+    result.succeed = true;
 }
 
 
@@ -445,10 +448,7 @@ static void _output(const unsigned int indentationLevel, const char * const form
 
 void generate(CompilerState * compilerState) {
 	logDebugging(_logger, "Generating final output...");
-	// _generatePrologue();
     _output(0, "%s", result.sql);
-	// _generateSQL(compilerState->abstractSyntaxtTree);
-	// _generateEpilogue(compilerState->sql);
 	logDebugging(_logger, "Generation is done.");
 }
 
