@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Define the directory with test files
-TEST_DIR="/home/katia/Documents/ITBA/tpe-tla-2C2024/src/test/c/accept"
+TEST_DIR="$PWD/src/test/c/accept"
 SCRIPT_PATH="script/ubuntu"
 
 # Build the project
