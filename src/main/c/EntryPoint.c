@@ -48,7 +48,7 @@ const int main(const int count, const char ** arguments) {
 			//compilerState.value = computationResult.value;
 			logDebugging(logger, "compilationStatus succeed");
 			//generate(&compilerState);
-			logDebugging(logger, "EEEE%s", compilerState.sql);
+			logDebugging(logger, "%s", computationResult.sql);
 		}
 		else {
 			logError(logger, "The computation phase rejects the input program.");

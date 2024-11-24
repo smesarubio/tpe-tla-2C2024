@@ -62,34 +62,36 @@ static char* removeQuotes(const char* str) {
 
 static void _generateAddAction(AddAction * addAction) {
     char buffer[1024];
-    logCritical(_logger, "ESTOY ACA");
     snprintf(buffer, sizeof(buffer), "ALTER TABLE %s\nADD (", removeQuotes(addAction->table_name));
-    strcpy(result.sql, buffer);
-    logCritical(_logger, "ESTOY ACA 2");
+    result.sql = strcat(result.sql, buffer);
     _generateColumnObject(addAction->column_object);
     result.sql = strcat(result.sql, ");\n");
 }
 
 static void _generateValueList(ValueList * valueList) {
-	if(valueList->value_list_union.second.value_list != NULL){
-		_generateValueList(valueList->value_list_union.second.value_list);
-		_output(0, ", ");
-	}
-	_generateValue(valueList->value_list_union.first.value);
+    if (valueList->value_list_union.second.value_list != NULL) {
+        _generateValueList(valueList->value_list_union.second.value_list);
+        result.sql = strcat(result.sql, ", ");
+    }
+    _generateValue(valueList->value_list_union.first.value);
 }
 
 static void _generateValue(Value * value) {
+    char buffer[1024];
     switch (value->type) {
         case VALUE_TYPE_STRING:
             if (value->values.string != NULL) {
-                _output(0, "%s", removeQuotes(value->values.string));
+                snprintf(buffer, sizeof(buffer), "%s", removeQuotes(value->values.string));
+                result.sql = strcat(result.sql, buffer);
             }
             break;
         case VALUE_TYPE_INTEGER:
-            _output(0, "%d", value->values.integer);
+            snprintf(buffer, sizeof(buffer), "%d", value->values.integer);
+            result.sql = strcat(result.sql, buffer);
             break;
         case VALUE_TYPE_FLOAT:
-            _output(0, "%f", value->values.float_value);
+            snprintf(buffer, sizeof(buffer), "%f", value->values.float_value);
+            result.sql = strcat(result.sql, buffer);
             break;
         default:
             logError(_logger, "Unknown value type");
@@ -138,14 +140,16 @@ static void _generateColumnItem(ColumnItem *columnItem) {
 }
 
 static void _generateDeleteAction(DeleteAction * deleteAction) {
-	if (deleteAction->where_object == NULL) {
-		_output(0, "DELETE FROM %s", removeQuotes(deleteAction->table_name));
-	}
-	else {
-		_output(0, "DELETE FROM %s \nWHERE ", removeQuotes(deleteAction->table_name));
-		_generateWhereObject(deleteAction->where_object);
-	}
-	_output(0, ";\n");
+    char buffer[1024];
+    if (deleteAction->where_object == NULL) {
+        snprintf(buffer, sizeof(buffer), "DELETE FROM %s", removeQuotes(deleteAction->table_name));
+        result.sql = strcat(result.sql, buffer);
+    } else {
+        snprintf(buffer, sizeof(buffer), "DELETE FROM %s \nWHERE ", removeQuotes(deleteAction->table_name));
+        result.sql = strcat(result.sql, buffer);
+        _generateWhereObject(deleteAction->where_object);
+    }
+    result.sql = strcat(result.sql, ";\n");
 }
 
 static const char* _getLogOpString(LogOpType logOpType) {
@@ -160,12 +164,14 @@ static const char* _getLogOpString(LogOpType logOpType) {
 }
 static void _generateWhereObject(WhereObject *whereObject) {
     if (whereObject == NULL) return;
+    char buffer[1024];
     if (whereObject->where_object_union.second.where_object != NULL) {
-        _output(0, "(");
+        strcat(result.sql, "(");
         _generateCondition(whereObject->where_object_union.second.condition);
-        _output(0, " %s ", _getLogOpString(whereObject->where_object_union.second.log_op));
+        snprintf(buffer, sizeof(buffer), " %s ", _getLogOpString(whereObject->where_object_union.second.log_op));
+        strcat(result.sql, buffer);
         _generateWhereObject(whereObject->where_object_union.second.where_object);
-        _output(0, ")");
+        strcat(result.sql, ")");
     }
     else if (whereObject->where_object_union.first.condition != NULL) {
         _generateCondition(whereObject->where_object_union.first.condition);
@@ -187,8 +193,9 @@ static const char* _getOperatorString(OperatorType operatorType) {
 }
 
 static void _generateCondition(Condition *condition) {
-    _output(0, "%s", removeQuotes(condition->string));
-    _output(0, " %s ", _getOperatorString(condition->operator));
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "%s %s ", removeQuotes(condition->string), _getOperatorString(condition->operator));
+    result.sql = strcat(result.sql, buffer);
     _generateValue(condition->value);
 }
 
@@ -198,22 +205,24 @@ static void _generateArray(Array *array) {
 
     if (array->string_list_union.second.string_list != NULL) {
         _generateArray(array->string_list_union.second.string_list);
-        _output(0, ", ");
+        result.sql = strcat(result.sql, ", ");
     }
 
-    _output(0, "%s", removeQuotes(array->string_list_union.first.string));
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "%s", removeQuotes(array->string_list_union.first.string));
+    result.sql = strcat(result.sql, buffer);
 }
 
 static void _generateInsertList(InsertList *insertList) {
     if (insertList == NULL) return;
-    _output(0, "(");
+    result.sql = strcat(result.sql, "(");
 
     _generateValueList(insertList->first.value_list);
 
-    _output(0, ")");
+    result.sql = strcat(result.sql, ")");
 
     if (insertList->second.list != NULL) {
-        _output(0, ", ");
+        result.sql = strcat(result.sql, ", ");
         _generateInsertList(insertList->second.list);
     }
 }
@@ -224,15 +233,17 @@ static void _generateInsertAction(InsertAction *insertAction) {
         return;
     }
 
-    _output(0, "INSERT INTO %s ", removeQuotes(insertAction->table_name));
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "INSERT INTO %s ", removeQuotes(insertAction->table_name));
+    result.sql = strcat(result.sql, buffer);
 
     if (insertAction->columns != NULL) {
-        _output(0, "(");
+        result.sql = strcat(result.sql, "(");
         _generateArray(insertAction->columns);
-        _output(0, ") ");
+        result.sql = strcat(result.sql, ") ");
     }
 
-    _output(0, "\nVALUES ");
+    result.sql = strcat(result.sql, "\nVALUES ");
 
     if (insertAction->value_list != NULL) {
         _generateInsertList(insertAction->value_list);
@@ -240,7 +251,7 @@ static void _generateInsertAction(InsertAction *insertAction) {
         logError(_logger, "Value list is NULL");
     }
 
-    _output(0, ";\n");
+    result.sql = strcat(result.sql, ";\n");
 }
 static void _generateHavingCondition(HavingCondition *havingCondition) {
     if (havingCondition == NULL) return;
@@ -267,82 +278,94 @@ static void _generateHavingCondition(HavingCondition *havingCondition) {
             break;
     }
 
-    _output(0, "%s(%s)", aggFuncStr, removeQuotes(havingCondition->string));
-    _output(0, " %s ", _getOperatorString(havingCondition->operator));
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "%s(%s)", aggFuncStr, removeQuotes(havingCondition->string));
+    result.sql = strcat(result.sql, buffer);
+
+    snprintf(buffer, sizeof(buffer), " %s ", _getOperatorString(havingCondition->operator));
+    result.sql = strcat(result.sql, buffer);
+
     _generateValue(havingCondition->value);
 }
 
 static void _generateHavingObject(HavingObject * HavingObject){
-    if(HavingObject->having_object_union.first.condition != NULL){
+    if (HavingObject->having_object_union.first.condition != NULL) {
         _generateHavingCondition(HavingObject->having_object_union.first.condition);
-    }
-    else{
-        _output(0, "(");
+    } else {
+        result.sql = strcat(result.sql, "(");
         _generateHavingCondition(HavingObject->having_object_union.second.condition);
-        _output(0, " %s ", _getLogOpString(HavingObject->having_object_union.second.log_op));
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), " %s ", _getLogOpString(HavingObject->having_object_union.second.log_op));
+        result.sql = strcat(result.sql, buffer);
         _generateHavingObject(HavingObject->having_object_union.second.having_object);
-        _output(0, ")");
+        result.sql = strcat(result.sql, ")");
     }
 }
 
 static void _generateSelectAction(SelectAction *selectAction) {
-    _output(0, "SELECT ");
+    char buffer[1024];
+    strcat(result.sql, "SELECT ");
 
     if (selectAction->table_column_list != NULL) {
         _generateArray(selectAction->table_column_list);
     } else {
-        _output(0, "*");
+        strcat(result.sql, "*");
     }
 
-    _output(0, " FROM %s", removeQuotes(selectAction->table_name));
+    snprintf(buffer, sizeof(buffer), " FROM %s", removeQuotes(selectAction->table_name));
+    strcat(result.sql, buffer);
 
     if (selectAction->join != NULL) {
-        _output(0, "\nJOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
+        snprintf(buffer, sizeof(buffer), "\nJOIN %s ON %s = %s", removeQuotes(selectAction->join->table_name2),
                 removeQuotes(selectAction->join->cond1), removeQuotes(selectAction->join->cond2));
+        strcat(result.sql, buffer);
     }
 
     if (selectAction->where_objects != NULL) {
-        _output(0, "\nWHERE ");
+        strcat(result.sql, "\nWHERE ");
         _generateWhereObject(selectAction->where_objects);
     }
 
     if (selectAction->group_by_column_list != NULL) {
-        _output(0, "\nGROUP BY ");
+        strcat(result.sql, "\nGROUP BY ");
         _generateArray(selectAction->group_by_column_list);
     }
 
     if (selectAction->having_object != NULL) {
-        _output(0, "\nHAVING ");
+        strcat(result.sql, "\nHAVING ");
         _generateHavingObject(selectAction->having_object);
     }
 
     if (selectAction->order_by_column_list != NULL) {
-        _output(0, "\nORDER BY ");
+        strcat(result.sql, "\nORDER BY ");
         _generateArray(selectAction->order_by_column_list);
     }
 
-    _output(0, ";\n");
+    strcat(result.sql, ";\n");
 }
 static void _generateUpdateAction(UpdateAction *updateAction) {
-    _output(0, "UPDATE %s \nSET ", removeQuotes(updateAction->table_name));
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "UPDATE %s \nSET ", removeQuotes(updateAction->table_name));
+    result.sql = strcat(result.sql, buffer);
 
     UpdateObject *updateItems = updateAction->update_object;
     while (updateItems != NULL) {
-        _output(0, "%s = ", removeQuotes(updateItems->condition->string));
+        snprintf(buffer, sizeof(buffer), "%s = ", removeQuotes(updateItems->condition->string));
+        result.sql = strcat(result.sql, buffer);
         _generateValue(updateItems->condition->value);
 
         updateItems = updateItems->next;
         if (updateItems != NULL) {
-            _output(0, ", ");
+            result.sql = strcat(result.sql, ", ");
         }
     }
 
     if (updateAction->where_object != NULL) {
-        _output(0, "\nWHERE ");
+        result.sql = strcat(result.sql, "\nWHERE ");
         _generateWhereObject(updateAction->where_object);
     }
 
-    _output(0, ";\n");
+    result.sql = strcat(result.sql, ";\n");
 }
 
 static void _generateAction(Action * action){
