@@ -115,7 +115,6 @@
 %token <token> UPDATE
 %token <token> VALUES
 %token <token> SET
-%token <token> NOT
 %token <token> INSERT
 %token <token> all
 %token <token> ON
@@ -321,8 +320,6 @@ where_object:
         { $$ = WhereObjectSemanticAction($cond, E_NONE, NULL); }
     | condition[cond] COMMA where_object[where_obj]
         { $$ = WhereObjectSemanticAction($cond, E_AND, $where_obj); }
-    | NOT where_object[where_obj]
-        { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
     ;
 
 

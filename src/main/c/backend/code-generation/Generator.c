@@ -141,8 +141,6 @@ static void _generateDeleteAction(DeleteAction * deleteAction) {
 
 static const char* _getLogOpString(LogOpType logOpType) {
     switch (logOpType) {
-        case E_NOT:
-            return "NOT";
         case E_AND:
             return "AND";
         case E_OR:

@@ -153,8 +153,6 @@ ColumnObject *ColumnObjectSemanticAction(String column_name, String column_type,
     return newColumnObject;
 }
 
-
-
 ColumnList * ColumnListSemanticAction(ColumnItem * column_item, ColumnList* column_list){
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	ColumnList * newColumnList = calloc(1, sizeof(ColumnList));

@@ -79,7 +79,6 @@ enum OperatorType {
 };
 
 enum LogOpType {
-    E_NOT,
     E_AND,
     E_OR, 
     E_NONE
