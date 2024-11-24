@@ -28,7 +28,8 @@ typedef struct {
 	// TODO: ...
 
 	// The computed value of the entire program (only for the calculator).
-	int value;
+	// int value;
+	char *sql;
 } CompilerState;
 
 #endif

@@ -2,10 +2,14 @@
   "UPDATE": {
     "TABLE": "users",
     "SET": {
-      "email": "new.email@example.com"
+      "email": "new.email@example.com", 
+      "name": "New Name",
+      "password": "newpassword",
+      "updated_at": "2020-01-01 00:00:00"
     },
     "WHERE": {
-      "id": 123
+      "id": 123, 
+      "email": "sss@ss.com"
     }
   }
 }

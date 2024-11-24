@@ -16,6 +16,9 @@ void shutdownGeneratorModule() {
 	}
 }
 
+ComputationResult result = { .succeed = false, .sql = NULL };
+
+
 /** PRIVATE FUNCTIONS */
 
 static const char _expressionTypeToCharacter(const ExpressionType type);
@@ -36,222 +39,385 @@ static void _output(const unsigned int indentationLevel, const char * const form
  * involved, or returns '\0' if that's not possible.
  */
 
+static char* removeQuotes(const char* str) {
+    if (str == NULL) return NULL;
 
+    size_t len = strlen(str);
+    if (len < 2) return strdup(str); 
 
-/**
- * Generates the output of the program.
- */
-static void _generateProgram(Program *program)
-{
-	_generateExpression(3, program->expression);
+    if (str[0] == '"' && str[len - 1] == '"') {
+        // Crea un nuevo string sin las comillas
+        char* result = (char*)malloc(len - 1); // Tamaño: len - 2 (contenido) + 1 (\0)
+        if (result == NULL) return NULL; // Manejo de errores de asignación
+
+        strncpy(result, str + 1, len - 2); // Copia el contenido interno
+        result[len - 2] = '\0'; // Agrega el terminador nulo
+        return result;
+    }
+
+    // Si no tiene comillas, lo devuelve igual.
+    return strdup(str);
 }
 
-static void _generateJsonQuery(JsonQuery * jsonQuery) {
-	 if(jsonQuery->query.node.json_query == NULL){
-		_generateAction(jsonQuery->query.node.action);
-	 }
-	 else{
-		 _generateJsonQuery(jsonQuery->query.node.json_query);
-		 _generateAction(jsonQuery->query.node.action);
-	 }
-}
-
-static void _generateAction(Action * action) {
-	if (action->actions.create_action != NULL){
-		_generateCreateAction(action->actions.create_action);
-	}
-	else if (action->actions.delete_action != NULL){
-		_generateDeleteAction(action->actions.delete_action);
-	}
-	else if (action->actions.select_action != NULL){
-		_generateSelectAction(action->actions.select_action);
-	}
-	else if (action->actions.add_action != NULL){
-		_generateAddAction(action->actions.add_action);
-	}
-	else if (action->actions.update_action != NULL){
-		_generateUpdateAction(action->actions.update_action);
-	}
-}
 
 static void _generateAddAction(AddAction * addAction) {
-	_output(0, "INSERT INTO %s VALUES (", addAction->table_name);
-	_generateValueList(addAction->array);
-	_output(0, ");\n");
-
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "ALTER TABLE %s\nADD (", removeQuotes(addAction->table_name));
+    result.sql = strcat(result.sql, buffer);
+    _generateColumnObject(addAction->column_object);
+    result.sql = strcat(result.sql, ");\n");
 }
 
 static void _generateValueList(ValueList * valueList) {
-	if(valueList->value_list_union.second.value_list != NULL){
-		_generateValueList(valueList->value_list_union.second.value_list);
-		_output(0, ", ");
-	}
-	_generateValue(valueList->value_list_union.first.value);
+    if (valueList->value_list_union.second.value_list != NULL) {
+        _generateValueList(valueList->value_list_union.second.value_list);
+        result.sql = strcat(result.sql, ", ");
+    }
+    _generateValue(valueList->value_list_union.first.value);
 }
 
 static void _generateValue(Value * value) {
-	if(value->values.string != NULL){
-		_output(0, "%s", value->values.string);
-	}
-	else if(value->values.integer != NULL){
-		_output(0, "%d", value->values.integer);
-	}
-	else if((value->values.float_value) != NULL){
-		_output(0, "%f", value->values.float_value);
-	}
+    char buffer[1024];
+    switch (value->type) {
+        case VALUE_TYPE_STRING:
+            if (value->values.string != NULL) {
+                snprintf(buffer, sizeof(buffer), "%s", removeQuotes(value->values.string));
+                result.sql = strcat(result.sql, buffer);
+            }
+            break;
+        case VALUE_TYPE_INTEGER:
+            snprintf(buffer, sizeof(buffer), "%d", value->values.integer);
+            result.sql = strcat(result.sql, buffer);
+            break;
+        case VALUE_TYPE_FLOAT:
+            snprintf(buffer, sizeof(buffer), "%f", value->values.float_value);
+            result.sql = strcat(result.sql, buffer);
+            break;
+        default:
+            logError(_logger, "Unknown value type");
+            break;
+    }
 }
 
 
 static void _generateCreateAction(CreateAction * createAction) {
-	_output(0, "CREATE TABLE %s (", createAction->table_name);
-	_generateColumnObject(createAction->column_object);
-	_output(0, ");\n");
+    logDebugging(_logger, "Generate action");
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "CREATE TABLE %s (", removeQuotes(createAction->table_name));
+    result.sql = strcat(result.sql, buffer);
+    _generateColumnObject(createAction->column_object);
+    result.sql = strcat(result.sql, ");\n");
 }
 
-static void _generateColumnObject(ColumnObject * columnObject) {
-	_generateColumnList(columnObject->column_list);
+static void _generateColumnObject(ColumnObject *columnObject) {
+    if (columnObject == NULL) return;
+    _generateColumnList(columnObject->column_list);
 }
 
-static void _generateColumnList(ColumnList * columnList) {
-	if(columnList->columnListUnion.second.column_list != NULL){
-		_generateColumnItem(columnList->columnListUnion.second.column_item);
-		_output(0, ", ");
-		_generateColumnList(columnList->columnListUnion.second.column_list);
-	}else{
-		_generateColumnItem(columnList->columnListUnion.first.column_item);
-	}
+static void _generateColumnList(ColumnList *columnList) {
+    if (columnList == NULL) return;
 
+    _generateColumnItem(columnList->columnListUnion.first.column_item);
+
+    if (columnList->columnListUnion.second.column_list != NULL) {
+        strcat(result.sql, ", ");
+        _generateColumnList(columnList->columnListUnion.second.column_list);
+    }
 }
 
-static void _generateColumnItem(ColumnItem * columnItem) {
-	_output(0, "%s %s", columnItem->left, columnItem->right);
+static void _generateColumnItem(ColumnItem *columnItem) {
+    if (columnItem == NULL) return;
+    const char *typeStr = removeQuotes(columnItem->right);
+    char buffer[256];
+    if (strcmp(typeStr, "STRING") == 0) {
+        snprintf(buffer, sizeof(buffer), "%s VARCHAR(40)", removeQuotes(columnItem->left));
+    } else if (strcmp(typeStr, "INTEGER") == 0) {
+        snprintf(buffer, sizeof(buffer), "%s int", removeQuotes(columnItem->left));
+    } else {
+        snprintf(buffer, sizeof(buffer), "%s %s", removeQuotes(columnItem->left), typeStr);
+    }
+    result.sql = strcat(result.sql, buffer);
 }
 
 static void _generateDeleteAction(DeleteAction * deleteAction) {
-	_output(0, "DELETE FROM %s WHERE ", deleteAction->table_name);
-	_generateWhereObject(deleteAction->where_object);
-	_output(0, ";\n");
+    char buffer[1024];
+    if (deleteAction->where_object == NULL) {
+        snprintf(buffer, sizeof(buffer), "DELETE FROM %s", removeQuotes(deleteAction->table_name));
+        result.sql = strcat(result.sql, buffer);
+    } else {
+        snprintf(buffer, sizeof(buffer), "DELETE FROM %s \nWHERE ", removeQuotes(deleteAction->table_name));
+        result.sql = strcat(result.sql, buffer);
+        _generateWhereObject(deleteAction->where_object);
+    }
+    result.sql = strcat(result.sql, ";\n");
 }
 
-static void _generateWhereObject(WhereObject * whereObject) {
-	if(whereObject->where_object_union.second.condition != NULL){
-
-	}else{
-		
-	}
+static const char* _getLogOpString(LogOpType logOpType) {
+    switch (logOpType) {
+        case E_AND:
+            return "AND";
+        case E_OR:
+            return "OR";
+        default:
+            return "AND";
+    }
+}
+static void _generateWhereObject(WhereObject *whereObject) {
+    if (whereObject == NULL) return;
+    char buffer[1024];
+    if (whereObject->where_object_union.second.where_object != NULL) {
+        strcat(result.sql, "(");
+        _generateCondition(whereObject->where_object_union.second.condition);
+        snprintf(buffer, sizeof(buffer), " %s ", _getLogOpString(whereObject->where_object_union.second.log_op));
+        strcat(result.sql, buffer);
+        _generateWhereObject(whereObject->where_object_union.second.where_object);
+        strcat(result.sql, ")");
+    }
+    else if (whereObject->where_object_union.first.condition != NULL) {
+        _generateCondition(whereObject->where_object_union.first.condition);
+    }
 }
 
-static void _generateCondition(Condition * condition) {
-	if(condition->operator == NULL){
-		_output(0, "%s %s ", condition->string, condition->operator);
-		_generateValue(condition->value);
-	}else{
+static const char* _getOperatorString(OperatorType operatorType) {
 
-	}
+    switch (operatorType) {
+        case E_EQUALS:
+            return "=";
+        case E_GREATER_THAN:
+            return ">";
+        case E_LESS_THAN:
+            return "<";
+        default:
+            return "=";
+    }
+}
 
+static void _generateCondition(Condition *condition) {
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "%s %s ", removeQuotes(condition->string), _getOperatorString(condition->operator));
+    result.sql = strcat(result.sql, buffer);
+    _generateValue(condition->value);
 }
 
 
+static void _generateArray(Array *array) {
+    if (array == NULL) return;
 
-static const char _expressionTypeToCharacter(const ExpressionType type) {
-	switch (type) {
-		case ADDITION: return '+';
-		case DIVISION: return '/';
-		case MULTIPLICATION: return '*';
-		case SUBTRACTION: return '-';
-		default:
-			logError(_logger, "The specified expression type cannot be converted into character: %d", type);
-			return '\0';
-	}
+    if (array->string_list_union.second.string_list != NULL) {
+        _generateArray(array->string_list_union.second.string_list);
+        result.sql = strcat(result.sql, ", ");
+    }
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "%s", removeQuotes(array->string_list_union.first.string));
+    result.sql = strcat(result.sql, buffer);
 }
 
-/**
- * Generates the output of a constant.
- */
-static void _generateConstant(const unsigned int indentationLevel, Constant * constant) {
-	_output(indentationLevel, "%s", "[ $C$, circle, draw, black!20\n");
-	_output(1 + indentationLevel, "%s%d%s", "[ $", constant->value, "$, circle, draw ]\n");
-	_output(indentationLevel, "%s", "]\n");
+static void _generateInsertList(InsertList *insertList) {
+    if (insertList == NULL) return;
+    result.sql = strcat(result.sql, "(");
+
+    _generateValueList(insertList->first.value_list);
+
+    result.sql = strcat(result.sql, ")");
+
+    if (insertList->second.list != NULL) {
+        result.sql = strcat(result.sql, ", ");
+        _generateInsertList(insertList->second.list);
+    }
 }
 
-/**
- * Creates the epilogue of the generated output, that is, the final lines that
- * completes a valid Latex document.
- */
-static void _generateEpilogue(const int value) {
-	_output(0, "%s%d%s",
-		"            [ $", value, "$, circle, draw, blue ]\n"
-		"        ]\n"
-		"    \\end{forest}\n"
-		"\\end{document}\n\n"
-	);
+static void _generateInsertAction(InsertAction *insertAction) {
+    if (insertAction == NULL) {
+        logError(_logger, "InsertAction is NULL");
+        return;
+    }
+
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "INSERT INTO %s ", removeQuotes(insertAction->table_name));
+    result.sql = strcat(result.sql, buffer);
+
+    if (insertAction->columns != NULL) {
+        result.sql = strcat(result.sql, "(");
+        _generateArray(insertAction->columns);
+        result.sql = strcat(result.sql, ") ");
+    }
+
+    result.sql = strcat(result.sql, "\nVALUES ");
+
+    if (insertAction->value_list != NULL) {
+        _generateInsertList(insertAction->value_list);
+    } else {
+        logError(_logger, "Value list is NULL");
+    }
+
+    result.sql = strcat(result.sql, ";\n");
 }
+static void _generateHavingCondition(HavingCondition *havingCondition) {
+    if (havingCondition == NULL) return;
+
+    const char *aggFuncStr;
+    switch (havingCondition->aggregate_func) {
+        case E_COUNT:
+            aggFuncStr = "COUNT";
+            break;
+        case E_SUM:
+            aggFuncStr = "SUM";
+            break;
+        case E_AVG:
+            aggFuncStr = "AVG";
+            break;
+        case E_MAX:
+            aggFuncStr = "MAX";
+            break;
+        case E_MIN:
+            aggFuncStr = "MIN";
+            break;
+        default:
+            aggFuncStr = "";
+            break;
+    }
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "%s(%s)", aggFuncStr, removeQuotes(havingCondition->string));
+    result.sql = strcat(result.sql, buffer);
+
+    snprintf(buffer, sizeof(buffer), " %s ", _getOperatorString(havingCondition->operator));
+    result.sql = strcat(result.sql, buffer);
+
+    _generateValue(havingCondition->value);
+}
+
+static void _generateHavingObject(HavingObject * HavingObject){
+    if (HavingObject->having_object_union.first.condition != NULL) {
+        _generateHavingCondition(HavingObject->having_object_union.first.condition);
+    } else {
+        result.sql = strcat(result.sql, "(");
+        _generateHavingCondition(HavingObject->having_object_union.second.condition);
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), " %s ", _getLogOpString(HavingObject->having_object_union.second.log_op));
+        result.sql = strcat(result.sql, buffer);
+        _generateHavingObject(HavingObject->having_object_union.second.having_object);
+        result.sql = strcat(result.sql, ")");
+    }
+}
+
+static void _generateSelectAction(SelectAction *selectAction) {
+    char buffer[1024];
+    strcat(result.sql, "SELECT ");
+
+    if (selectAction->table_column_list != NULL) {
+        _generateArray(selectAction->table_column_list);
+    } else {
+        strcat(result.sql, "*");
+    }
+
+    snprintf(buffer, sizeof(buffer), " FROM %s ", removeQuotes(selectAction->table_name));
+    strcat(result.sql, buffer);
+
+    if (selectAction->join != NULL) {
+        snprintf(buffer, sizeof(buffer), "\nJOIN %s ON ", removeQuotes(selectAction->join->table_name2));
+        strcat(result.sql, buffer);
+        _generateCondition(selectAction->join->cond1);
+        strcat(result.sql, " AND ");
+        _generateCondition(selectAction->join->cond2);
+    }
+
+    if (selectAction->where_objects != NULL) {
+        strcat(result.sql, "\nWHERE ");
+        _generateWhereObject(selectAction->where_objects);
+    }
+
+    if (selectAction->group_by_column_list != NULL) {
+        strcat(result.sql, "\nGROUP BY ");
+        _generateArray(selectAction->group_by_column_list);
+    }
+
+    if (selectAction->having_object != NULL) {
+        strcat(result.sql, "\nHAVING ");
+        _generateHavingObject(selectAction->having_object);
+    }
+
+    if (selectAction->order_by_column_list != NULL) {
+        strcat(result.sql, "\nORDER BY ");
+        _generateArray(selectAction->order_by_column_list);
+    }
+
+    strcat(result.sql, ";\n");
+}
+static void _generateUpdateAction(UpdateAction *updateAction) {
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "UPDATE %s \nSET ", removeQuotes(updateAction->table_name));
+    result.sql = strcat(result.sql, buffer);
+
+    UpdateObject *updateItems = updateAction->update_object;
+    while (updateItems != NULL) {
+        snprintf(buffer, sizeof(buffer), "%s = ", removeQuotes(updateItems->condition->string));
+        result.sql = strcat(result.sql, buffer);
+        _generateValue(updateItems->condition->value);
+
+        updateItems = updateItems->next;
+        if (updateItems != NULL) {
+            result.sql = strcat(result.sql, ", ");
+        }
+    }
+
+    if (updateAction->where_object != NULL) {
+        result.sql = strcat(result.sql, "\nWHERE ");
+        _generateWhereObject(updateAction->where_object);
+    }
+
+    result.sql = strcat(result.sql, ";\n");
+}
+
+static void _generateAction(Action * action){
+    switch (action->type) {
+        case E_CREATE:
+            logDebugging(_logger, "Generando CREATE...");
+            _generateCreateAction(action->actions.create_action);
+            break;
+
+        case E_SELECT:
+            logDebugging(_logger, "Generando SELECT...");
+            _generateSelectAction(action->actions.select_action);
+            break;
+
+        case E_DELETE:
+            logDebugging(_logger, "Generando DELETE...");
+            _generateDeleteAction(action->actions.delete_action);
+            break;
+
+        case E_ADD:
+            logDebugging(_logger, "Generando ADD...");
+            _generateAddAction(action->actions.add_action);
+            break;
+
+        case E_UPDATE:
+            logDebugging(_logger, "Generando UPDATE...");
+            _generateUpdateAction(action->actions.update_action);
+            break;
+
+        case E_INSERT:
+            logDebugging(_logger, "Generando INSERT...");
+            _generateInsertAction(action->actions.insert_action);
+            break;
+
+        default:
+            logError(_logger, "Tipo de acción desconocido: %d", action->type);
+            break;
+        }
+    result.succeed = true;
+}
+
 
 /**
  * Generates the output of an expression.
  */
-static void _generateExpression(const unsigned int indentationLevel, Expression * expression) {
-	_output(indentationLevel, "%s", "[ $E$, circle, draw, black!20\n");
-	switch (expression->type) {
-		case ADDITION:
-		case DIVISION:
-		case MULTIPLICATION:
-		case SUBTRACTION:
-			_generateExpression(1 + indentationLevel, expression->leftExpression);
-			_output(1 + indentationLevel, "%s%c%s", "[ $", _expressionTypeToCharacter(expression->type), "$, circle, draw, purple ]\n");
-			_generateExpression(1 + indentationLevel, expression->rightExpression);
-			break;
-		case FACTOR:
-			_generateFactor(1 + indentationLevel, expression->factor);
-			break;
-		default:
-			logError(_logger, "The specified expression type is unknown: %d", expression->type);
-			break;
-	}
-	_output(indentationLevel, "%s", "]\n");
-}
-
-/**
- * Generates the output of a factor.
- */
-static void _generateFactor(const unsigned int indentationLevel, Factor * factor) {
-	_output(indentationLevel, "%s", "[ $F$, circle, draw, black!20\n");
-	switch (factor->type) {
-		case CONSTANT:
-			_generateConstant(1 + indentationLevel, factor->constant);
-			break;
-		case EXPRESSION:
-			_output(1 + indentationLevel, "%s", "[ $($, circle, draw, purple ]\n");
-			_generateExpression(1 + indentationLevel, factor->expression);
-			_output(1 + indentationLevel, "%s", "[ $)$, circle, draw, purple ]\n");
-			break;
-		default:
-			logError(_logger, "The specified factor type is unknown: %d", factor->type);
-			break;
-	}
-	_output(indentationLevel, "%s", "]\n");
-}
-
-
-/**
- * Creates the prologue of the generated output, a Latex document that renders
- * a tree thanks to the Forest package.
- *
- * @see https://ctan.dcc.uchile.cl/graphics/pgf/contrib/forest/forest-doc.pdf
- */
-static void _generatePrologue(void) {
-	_output(0, "%s",
-		"\\documentclass{standalone}\n\n"
-		"\\usepackage[utf8]{inputenc}\n"
-		"\\usepackage[T1]{fontenc}\n"
-		"\\usepackage{amsmath}\n"
-		"\\usepackage{forest}\n"
-		"\\usepackage{microtype}\n\n"
-		"\\begin{document}\n"
-		"    \\centering\n"
-		"    \\begin{forest}\n"
-		"        [ \\text{$=$}, circle, draw, purple\n"
-	);
+static void _generateSQL(JsonQuery * json_query) {
+    while (json_query != NULL) {
+        _generateAction(json_query->action);
+        json_query = json_query->next;
+    }
 }
 
 /**
@@ -282,8 +448,13 @@ static void _output(const unsigned int indentationLevel, const char * const form
 
 void generate(CompilerState * compilerState) {
 	logDebugging(_logger, "Generating final output...");
-	_generatePrologue();
-	_generateProgram(compilerState->abstractSyntaxtTree);
-	_generateEpilogue(compilerState->value);
+    _output(0, "%s", result.sql);
 	logDebugging(_logger, "Generation is done.");
+}
+
+ComputationResult computeJson(JsonQuery * json_query) {
+    logDebugging(_logger, "Computing JSON...");
+    result.sql = (char*)malloc(1024);
+    _generateSQL(json_query);
+    return result;
 }

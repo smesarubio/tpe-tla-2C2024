@@ -63,6 +63,7 @@ Token ArithmeticOperatorLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerCon
 Token IntegerLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
 	lexicalAnalyzerContext->semanticValue->integer = atoi(lexicalAnalyzerContext->lexeme);
+	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
 	return INTEGER;
 }
 
@@ -112,23 +113,10 @@ Token SqlKeywordLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, To
 
 Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-    // Remove quotes and handle escape characters
-    //char* unescaped = unescapeString(lexicalAnalyzerContext->lexeme + 1, lexicalAnalyzerContext->length - 2);
     lexicalAnalyzerContext->semanticValue->string = lexicalAnalyzerContext->lexeme;
     return STRING;
 }
 
-/*
-
-"true"                      { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
-"false"                     { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
-
-Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
-    _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-    lexicalAnalyzerContext->semanticValue->boolean = (strcmp(lexicalAnalyzerContext->lexeme, "true") == 0);
-    return BOOL;
-}
-*/
 Token NullLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
     return NUL;
@@ -139,14 +127,3 @@ Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
     lexicalAnalyzerContext->semanticValue->float_value = atof(lexicalAnalyzerContext->lexeme);
     return FLOAT;
 }
-/*
-Esto estaba en el .l
-[a-zA-Z_][a-zA-Z0-9_]*      { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
-
-y esto aca
-Token IdentifierLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
-    _logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-    lexicalAnalyzerContext->semanticValue->string = strdup(lexicalAnalyzerContext->lexeme);
-    return IDENTIFIER;
-}
-*/

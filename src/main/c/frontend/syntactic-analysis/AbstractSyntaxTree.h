@@ -25,8 +25,7 @@ typedef struct UpdateAction UpdateAction;
 typedef struct ColumnObject ColumnObject;
 typedef struct ColumnList ColumnList;
 typedef struct ColumnItem ColumnItem;
-typedef struct UpdateList UpdateList;
-typedef struct UpdateItems UpdateItems;
+typedef struct UpdateObject UpdateObject;
 typedef struct StringList StringList;
 typedef struct WhereObject WhereObject;
 typedef struct HavingObject HavingObject;
@@ -36,11 +35,6 @@ typedef struct Value Value;
 typedef struct Array Array;
 typedef struct ValueList ValueList;
 typedef struct Function Function;
-// typedef struct Integer Integer;
-// typedef struct Float Float;
-typedef struct LogOp LogOp;
-typedef struct AggFunc AggFunc;
-typedef struct Operator Operator;
 typedef struct Clause Clause;
 typedef struct InsertList InsertList;
 typedef struct Join Join;
@@ -58,9 +52,6 @@ typedef struct Factor Factor;
 typedef struct Program Program;
 
 typedef char * String;
-typedef int Integer;
-typedef float Float;
-
 
 /**
 
@@ -76,44 +67,66 @@ enum actionType {
     E_SELECT_ALL,
     E_DELETE,
     E_ADD,
-    E_UPDATE
+    E_UPDATE, 
+    E_INSERT
 };
 
+
+enum OperatorType {
+    E_EQUALS,
+    E_GREATER_THAN,
+    E_LESS_THAN
+};
+
+enum LogOpType {
+    E_AND,
+    E_OR, 
+    E_NONE
+};
+
+enum AggFuncType {
+    E_COUNT,
+    E_SUM,
+    E_AVG,
+    E_MAX,
+    E_MIN
+};
+
+typedef enum {
+    VALUE_TYPE_STRING,
+    VALUE_TYPE_INTEGER,
+    VALUE_TYPE_FLOAT
+} ValueType;
+
 struct JsonQuery {
-    union {
-        Action* action;
-        struct {
-            Action* action;
-            struct JsonQuery* json_query;
-        } node;
-    } query;
+    Action* action;
+    struct JsonQuery* next;
 };
 
 struct Action {
+    ActionType type;
     union {
         CreateAction* create_action;
         DeleteAction* delete_action;
         SelectAction* select_action;
         AddAction* add_action;
         UpdateAction* update_action;
+        InsertAction* insert_action;
     } actions;
 };
 
 struct InsertAction {
-    ActionType type;
     String table_name;
     Array* columns;
     InsertList* value_list;
 };
 
 struct CreateAction {
-    ActionType type;
     String table_name;
     ColumnObject* column_object;
 };
 
 struct DeleteAction {
-    ActionType type;
     String table_name; 
     WhereObject* where_object;
 };
@@ -126,7 +139,6 @@ struct Clause {
 };
 
 struct SelectAction {
-    ActionType type;
     Array* table_column_list;
     String table_name;
     WhereObject* where_objects;
@@ -137,15 +149,13 @@ struct SelectAction {
 };
 
 struct AddAction {
-    ActionType type;
     String table_name;
-    ValueList* array; 
+    ColumnObject* column_object;
 };
 
 struct UpdateAction {
-    ActionType type;
     String table_name;
-    UpdateList* update_list;
+    UpdateObject* update_object;
     WhereObject* where_object;
 };
 
@@ -170,24 +180,10 @@ struct ColumnItem {
     String right;
 };
 
-struct UpdateList {
-    UpdateItems* update_items;
+struct UpdateObject {
+    Condition* condition;
+    UpdateObject* next;
 };
-
-struct UpdateItems {
-    union {
-        struct {
-            String string;
-            Value* value;
-        } first;
-        struct {
-            String string;
-            Value* value;
-            UpdateItems* update_items;
-        } second;
-    } update_items_union;
-};
-
 
 struct WhereObject {
     union {
@@ -196,13 +192,9 @@ struct WhereObject {
         } first;
         struct {
             Condition* condition;
-            LogOp* log_op;
+            LogOpType log_op;
             WhereObject* where_object;
         } second;
-        struct {
-            LogOp* log_op;
-            WhereObject* where_object;
-        } third;
     } where_object_union;
 };
 
@@ -213,34 +205,31 @@ struct HavingObject {
         } first;
         struct {
             HavingCondition* condition;
-            LogOp* log_op;
+            LogOpType log_op;
             HavingObject* having_object;
         } second;
-        struct {
-            LogOp* log_op;
-            HavingObject* having_object;
-        } third;
     } having_object_union;
 };
 
 struct HavingCondition {
     String string;
-    AggFunc* aggregate_func;
-    Operator* operator;
+    AggFuncType aggregate_func;
+    OperatorType operator;
     Value* value;
 };
 
 struct Condition {
     String string;
-    Operator* operator;
+    OperatorType operator;
     Value* value;
 };
 
 struct Value {
+    ValueType type;
     union {
         String string;
-        Integer integer;
-        Float float_value;
+        int integer;
+        float float_value;
     } values;
 };
 
@@ -283,88 +272,31 @@ struct ValueList {
 struct Join {
     String table_name1;
     String table_name2;
-    String cond1;
-    String cond2;
-};
-
-struct Function {
-    // Definir los campos aquí
-};
-
-// struct String {
-//     char* value;
-// };
-
-// struct Integer {
-//     int value;
-// };
-
-// struct Float {
-//     float value;
-// };
-
-
-struct AggFunc {
-    AggFuncType* agg_func_value;
-};
-
-struct Operator {
-    OperatorType* operator_type;
-};
-
-struct LogOp {
-    LogOpType * log_op_type;
+    Condition* cond1;
+    Condition* cond2;
 };
 
 
-
-enum OperatorType {
-    E_EQUALS,
-    E_GREATER_THAN,
-    E_LESS_THAN
-};
-
-enum LogOpType {
-    E_NOT,
-    E_AND,
-    E_OR
-};
-
-enum AggFuncType {
-    E_COUNT,
-    E_SUM,
-    E_AVG,
-    E_MAX,
-    E_MIN
-};
-
-
-enum FactorType {
-    E_CONSTANT,
-    E_EXPRESSION
-};
-
-/**
- * Node recursive destructors.
- */
-void releaseConstant(Constant* constant);
-void releaseExpression(Expression* expression);
-void releaseFactor(Factor* factor);
-void releaseProgram(Program* program);
-
+void releaseProgram(JsonQuery* program);
+void releaseUpdateObject(UpdateObject* UpdateObject);
 void releaseInsertAction(InsertAction* insert_action);
 void releaseArray(Array* array);
 void releaseSelectAction(SelectAction* select_action);
 void releaseWhereObject(WhereObject* where_object);
 void releaseCondition(Condition* condition);
-void releaseOperator(Operator* operator);
 void releaseValue(Value* value);
 void releaseJoin(Join* join);
 void releaseInsertList(InsertList* insert_list);
 void releaseHavingObject(HavingObject* having_object);
-void releaseLogOp(LogOp* log_op);
 void releaseHavingCondition(HavingCondition* having_condition);
-void releaseAggFunc(AggFunc* agg_func);
 void releaseValueList(ValueList* value_list);
+void releaseAction(Action *action);
+void releaseCreateAction(CreateAction *create_action);
+void releaseDeleteAction(DeleteAction *delete_action);
+void releaseAddAction(AddAction *add_action);
+void releaseUpdateAction(UpdateAction *update_action);
+void releaseColumnObject(ColumnObject *column_object);
+void releaseColumnList(ColumnList *column_list);
+void releaseColumnItem(ColumnItem *column_item);
 
 #endif

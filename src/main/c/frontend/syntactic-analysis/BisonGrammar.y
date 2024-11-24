@@ -1,7 +1,7 @@
 %{
 
 #include "BisonActions.h"
-
+#include "AbstractSyntaxTree.h"
 %}
 
 %code requires{
@@ -15,10 +15,12 @@
 %union {
 	/** Terminals. */
 	String string;
-	Integer integer;
-	Float float_value;
+	int integer;
+	float float_value;
 	Token token;
-
+    OperatorType operator;
+    AggFuncType aggregate_function;
+    LogOpType logical_op;
 	/** Non-terminals. */
 	JsonQuery * json_query;
     Action * action;
@@ -29,10 +31,7 @@
     AddAction * add_action;
     UpdateAction * update_action;
     ColumnObject * column_object;
-    ColumnList * column_list;
-    ColumnItem * column_item;
-    UpdateList * update_list;
-    UpdateItems * update_items;
+    UpdateObject * update_object;
     WhereObject * where_object;
     HavingObject * having_object;
     Condition * condition;
@@ -40,9 +39,6 @@
     Array * string_list;
     ValueList * value_list;   
     Function * function;
-    AggFunc* aggregate_function;
-    Operator* operator;
-    LogOp* logical_op;
     HavingCondition* having_condition;
     Array* array;
     Clause* clause;
@@ -73,13 +69,16 @@
 %destructor { releaseSelectAction($$); } <select_action>
 %destructor { releaseWhereObject($$); } <where_object>
 %destructor { releaseCondition($$); } <condition>
-%destructor { releaseOperator($$); } <operator>
 %destructor { releaseValue($$); } <value>
+%destructor { releaseColumnObject($$); } <column_object>
+%destructor { releaseCreateAction($$); } <create_action>
+%destructor { releaseDeleteAction($$); } <delete_action>
+%destructor { releaseAddAction($$); } <add_action>
+%destructor { releaseUpdateObject($$); } <update_object>
+%destructor { releaseUpdateAction($$); } <update_action>
 %destructor { releaseInsertList($$); } <insert_list>
 %destructor { releaseHavingObject($$); } <having_object>
-%destructor { releaseLogOp($$); } <logical_op>
 %destructor { releaseHavingCondition($$); } <having_condition>
-%destructor { releaseAggFunc($$); } <aggregate_function>
 %destructor { releaseValueList($$); } <value_list>
 
 /** Terminals. */
@@ -116,7 +115,6 @@
 %token <token> UPDATE
 %token <token> VALUES
 %token <token> SET
-%token <token> NOT
 %token <token> INSERT
 %token <token> all
 %token <token> ON
@@ -127,6 +125,7 @@
 
 /** Non-terminals. */
 %type <json_query> json_query
+%type <json_query> action_list
 %type <action> action
 %type <insert_action> insert_action
 %type <create_action> create_action
@@ -135,10 +134,7 @@
 %type <add_action> add_action
 %type <update_action> update_action
 %type <column_object> column_object
-%type <column_list> column_list
-%type <column_item> column_item
-%type <update_list> update_list
-%type <update_items> update_items
+%type <update_object> update_object
 %type <where_object> where_object
 %type <having_object> having_object
 %type <condition> condition
@@ -178,16 +174,33 @@
 
 
 
-json_query:     action[act]                                 { $$ = JsonQuerySemanticAction( currentCompilerState(), $act, NULL);}
-                |LBRACE action[act] COMMA json_query[query] RBRACE      { $$ = JsonQuerySemanticAction(currentCompilerState(), $act, $query);}
+json_query:
+    BRACKET_OPEN action_list[act_list] BRACKET_CLOSE {
+        $$ = $act_list; 
+    }| action[act] {
+        $$ = JsonQuerySemanticAction(currentCompilerState(), $act, NULL);
+    }
+    ;
 
-action:     create_action                                { $$ = (Action *) $1; }
-				| select_action                          { $$ = (Action *) $1; }
-				| delete_action                          { $$ = (Action *) $1; }
-				| add_action                             { $$ = (Action *) $1; }
-				| update_action                          { $$ = (Action *) $1; }
-                | insert_action                          { $$ = (Action *) $1; }
-				;
+action_list:
+    action[act] {
+        $$ = JsonQuerySemanticAction(currentCompilerState(), $act, NULL);
+    }
+    | action[act] COMMA action_list[act_list] {
+        $$ = JsonQuerySemanticAction(currentCompilerState(), $act, $act_list);
+    }
+    ;
+
+
+action: create_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_CREATE; $$->actions.create_action = $1; }
+      | select_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_SELECT; $$->actions.select_action = $1; }
+      | delete_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_DELETE; $$->actions.delete_action = $1; }
+      | add_action          { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_ADD; $$->actions.add_action = $1; }
+      | update_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_UPDATE; $$->actions.update_action = $1; }
+      | insert_action       { $$ = (Action *) malloc(sizeof(Action)); $$->type = E_INSERT; $$->actions.insert_action = $1; }
+;
+
+
 
 insert_action:
                 LBRACE
@@ -215,10 +228,10 @@ select_action:
     |
     LBRACE SELECT COLON BRACKET_OPEN string_list[col_list] BRACKET_CLOSE COMMA
     FROM  COLON STRING[str] 
-    COMMA JOIN COLON LBRACE STRING[str2] COLON LBRACE ON COLON LBRACE STRING[cond1] COLON STRING[cond2] RBRACE RBRACE RBRACE
+    COMMA JOIN COLON LBRACE STRING[str2] COLON LBRACE ON COLON LBRACE condition[cond1] COMMA condition[cond2] RBRACE RBRACE RBRACE
     clause[clause_block]
     RBRACE
-        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object, JoinSemanticAction($str2, $str, $cond1, $cond2)); }
+        { $$ = SelectActionSemanticAction($col_list, $str, $clause_block->where_object, $clause_block->group_by_column_list, $clause_block->order_by_column_list, $clause_block->having_object, JoinSemanticAction($str, $str2, $cond1, $cond2)); }
     |
     LBRACE SELECT COLON all COMMA FROM COLON STRING[str] RBRACE
         { $$ = SelectAllActionSemanticAction($str); }
@@ -242,13 +255,13 @@ clause:
     | 
         { $$ = ClauseSemanticAction(NULL, NULL, NULL, NULL); }
     ;
-
 where_clause:
     COMMA WHERE COLON LBRACE where_object[where_obj] RBRACE
-        { $$ = $where_obj; } 
-        |  COMMA WHERE COLON LBRACE logical_op[log_op] COLON LBRACE condition[c1] COMMA condition[c2] RBRACE RBRACE
-        { $$ = WhereObjectSemanticAction($c1, $log_op, (WhereObject*)$c2); } 
-        ;
+        { $$ = $where_obj; }
+    | COMMA WHERE COLON LBRACE logical_op[log_op] COLON LBRACE condition[c1] COMMA condition[c2] RBRACE RBRACE
+        {  WhereObject *firstWhereObject = WhereObjectSemanticAction($c2, 0, NULL); $$ = WhereObjectSemanticAction($c1, $log_op, firstWhereObject); }
+    ;
+
 
 group_by_clause:
     COMMA GROUP_BY COLON BRACKET_OPEN string_list[group_list] BRACKET_CLOSE
@@ -257,6 +270,7 @@ group_by_clause:
 order_by_clause:
     COMMA ORDER_BY COLON BRACKET_OPEN string_list[order_list] BRACKET_CLOSE
         { $$ = $order_list; };
+
 having_clause:
     COMMA HAVING COLON BRACKET_OPEN LBRACE having_object[hav_obj] RBRACE BRACKET_CLOSE
         { $$ = $hav_obj; } ;
@@ -274,56 +288,46 @@ add_action:
 				LBRACE
 				ADD COLON LBRACE
 				TABLE COLON STRING COMMA
-				VALUES COLON BRACKET_OPEN value_list[arr] BRACKET_CLOSE
+				COLUMNS COLON LBRACE column_object[col_obj] RBRACE
 				RBRACE
-				RBRACE                              { $$ = AddActionSemanticAction($7, $arr); }
+				RBRACE                              { $$ = AddActionSemanticAction($7, $col_obj); }
 				;
 
 update_action:
                 LBRACE
                 UPDATE COLON LBRACE
-                TABLE COLON STRING COMMA
-                SET COLON update_list[upd_list] where_clause[where_obj]
+                TABLE COLON STRING[str] COMMA
+                SET COLON LBRACE 
+                update_object[upd_list] 
+                RBRACE 
+                where_clause[where_obj]
                 RBRACE
-                RBRACE                              { $$ = UpdateActionSemanticAction($7, $upd_list, $where_obj); }
+                RBRACE                              { $$ = UpdateActionSemanticAction($str, $upd_list, $where_obj); }
                 ;
 
 
 column_object:
-                column_list[col_list]        { $$ = (ColumnObject *) $col_list; }
+    STRING COLON STRING                              { $$ = ColumnObjectSemanticAction($1, $3, NULL); }
+    | STRING COLON STRING COMMA column_object[col_obj] { $$ = ColumnObjectSemanticAction($1, $3, $col_obj); }
+    ;
+
+
+update_object:
+                condition[cond]                                  { $$ = UpdateObjectSemanticAction($cond, NULL); }
+                | condition[cond] COMMA update_object[upd_itmes]  { $$ = UpdateObjectSemanticAction($cond, $upd_itmes); }
                 ;
-
-column_list:
-                column_item                             { $$ = ColumnListSemanticAction($1, NULL); }
-                | column_list COMMA column_item         { $$ = ColumnListSemanticAction($3, $1); }
-                
-                ;
-
-column_item:
-                STRING COLON STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
-                |STRING COMMA STRING                     { $$ = ColumnItemSemanticAction($1, $3); }
-                ;
-
-
-update_list:
-                LBRACE update_items[upd_items] RBRACE      { $$ = (UpdateList *) $upd_items; }
-                ;
-
-update_items:
-                STRING COLON value[val]                                  { $$ = UpdateItemSemanticAction($1, $val, NULL); }
-                | STRING COLON value[val] COMMA update_items[upd_itmes]  { $$ = UpdateItemSemanticAction($1, $val, $upd_itmes); }
-                ;
-
 
 where_object:
-             condition[cond]                               { $$ = (WhereObject *) $cond; }
-            |  condition[cond] COMMA where_object[where_obj]     { $$ = WhereObjectSemanticAction($cond, LogOpSemanticAction(AND), $where_obj); }
-            |  NOT where_object[where_obj]                       { $$ = WhereObjectSemanticAction(NULL, E_NOT, $where_obj); }
-            ;
+    condition[cond]
+        { $$ = WhereObjectSemanticAction($cond, E_NONE, NULL); }
+    | condition[cond] COMMA where_object[where_obj]
+        { $$ = WhereObjectSemanticAction($cond, E_AND, $where_obj); }
+    ;
+
 
 having_object:
-            having_condition[hav_con]                                { $$ = (HavingObject *) $hav_con; }
-            | having_condition[hav_con] COMMA having_object[hav_obj]  { $$ = HavingObjectSemanticAction($hav_con, LogOpSemanticAction(AND), $hav_obj); }
+            having_condition[hav_con]                                { $$ = HavingObjectSemanticAction($hav_con, E_NONE, NULL); }
+            | having_condition[hav_con] COMMA having_object[hav_obj]  { $$ = HavingObjectSemanticAction($hav_con, E_AND, $hav_obj); }
             ;
 
 having_condition: 
@@ -332,28 +336,28 @@ having_condition:
             ;
 
 condition:
-            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str,NULL, $val); }
-            | operator COLON  value[val]                     { $$ = ConditionSemanticAction(NULL,$1, $3); }
+            STRING[str] COLON value[val]                    { $$ = ConditionSemanticAction($str,E_EQUALS, $val); }
+            | STRING[str] COLON LBRACE operator[op] COLON value[val] RBRACE                    { $$ = ConditionSemanticAction($str,$op, $val); }
             ;
 
 
 aggregate_function:
-                COUNT   { $$ = (AggFunc *) COUNT; }
-                | SUM   { $$ = (AggFunc *)  SUM; }
-                | AVG   { $$ = (AggFunc *)  AVG; }
-                | MAX   { $$ = (AggFunc *)  MAX; }
-                | MIN   { $$ = (AggFunc *) MIN; }
+                COUNT   { $$ = E_COUNT; }
+                | SUM   { $$ = E_SUM; }
+                | AVG   { $$ = E_AVG; }
+                | MAX   { $$ = E_MAX; }
+                | MIN   { $$ = E_MIN; }
                 ;   
 
 
 operator: 
-                EQUALS             {$$ = (Operator *) EQUALS; }
-                | GREATER_THAN     {$$ = (Operator *) GREATER_THAN; }
-                | LESS_THAN        {$$ = (Operator *) LESS_THAN; }
+                EQUALS             {$$ = E_EQUALS; }
+                | GREATER_THAN     {$$ = E_GREATER_THAN; }
+                | LESS_THAN        {$$ = E_LESS_THAN; }
                 ;
 
 value:
-            STRING                                   { $$ = StringValueSemanticAction($1); }
+            STRING                                   { $$ = StringValueSemanticAction($1);  }
             | INTEGER                                { $$ = IntegerValueSemanticAction($1); }
             | FLOAT                                  { $$ = FloatValueSemanticAction($1); }
             ;
@@ -373,8 +377,8 @@ string_list:
                 ;                                
 
 
-logical_op:     AND     { $$ = LogOpSemanticAction(AND); }
-                | OR    { $$ = LogOpSemanticAction(OR); }
+logical_op:     AND     { $$ = E_AND; }
+                | OR    { $$ = E_OR; }
                 ;          
 
 %%

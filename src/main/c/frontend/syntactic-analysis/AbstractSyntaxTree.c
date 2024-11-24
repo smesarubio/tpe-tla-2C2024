@@ -14,112 +14,224 @@ void shutdownAbstractSyntaxTreeModule() {
 	}
 }
 
-/** PUBLIC FUNCTIONS */
+void releaseProgram(JsonQuery *program) {
+    if (program == NULL) {
+        logDebugging(_logger, "releaseProgram: Program is NULL");
+        return;
+    }
 
-// void releaseConstant(Constant * constant) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (constant != NULL) {
-// 		free(constant);
-// 	}
-// }
+    logDebugging(_logger, "Releasing program actions");
+    while(program->next != NULL) {
+        JsonQuery *next = program->next;
+        releaseAction(program->action);
+        free(program);
+        program = next;
+    }
+    logDebugging(_logger, "Releasing program memory");
+    releaseAction(program->action);
+    free(program);
 
-// void releaseExpression(Expression * expression) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (expression != NULL) {
-// 		switch (expression->type) {
-// 			case ADDITION:
-// 			case DIVISION:
-// 			case MULTIPLICATION:
-// 			case SUBTRACTION:
-// 				releaseExpression(expression->leftExpression);
-// 				releaseExpression(expression->rightExpression);
-// 				break;
-// 			case FACTOR:
-// 				releaseFactor(expression->factor);
-// 				break;
-// 		}
-// 		free(expression);
-// 	}
-// }
-
-// void releaseFactor(Factor * factor) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (factor != NULL) {
-// 		switch (factor->type) {
-// 			case CONSTANT:
-// 				releaseConstant(factor->constant);
-// 				break;
-// 			case EXPRESSION:
-// 				releaseExpression(factor->expression);
-// 				break;
-// 		}
-// 		free(factor);
-// 	}
-// }
+    logDebugging(_logger, "Program successfully released");
+}
 
 
+void releaseAction(Action *action) {
+    if (action == NULL) return;
+    switch (action->type) {
+        case E_CREATE:
+            if (action->actions.create_action != NULL) {
+                releaseCreateAction(action->actions.create_action);
+            }
+            break;
 
-// void releaseProgram(Program * program) {
-// 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-// 	if (program != NULL) {
-// 		releaseExpression(program->expression);
-// 		free(program);
-// 	}
-// }
+        case E_SELECT:
+            if (action->actions.select_action != NULL) {
+                releaseSelectAction(action->actions.select_action);
+            }
+            break;
+
+        case E_DELETE:
+            if (action->actions.delete_action != NULL) {
+                releaseDeleteAction(action->actions.delete_action);
+            }
+            break;
+
+        case E_ADD:
+            if (action->actions.add_action != NULL) {
+                releaseAddAction(action->actions.add_action);
+            }
+            break;
+
+        case E_UPDATE:
+            if (action->actions.update_action != NULL) {
+                releaseUpdateAction(action->actions.update_action);
+            }
+            break;
+
+        case E_INSERT:
+            if (action->actions.insert_action != NULL) {
+                releaseInsertAction(action->actions.insert_action);
+            }
+            break;
+
+        default:
+            logError(_logger, "Unknown action type: %d", action->type);
+            break;
+    }
+    free(action);
+}
+
+
+void releaseCreateAction(CreateAction *create_action) {
+    if (create_action == NULL) return;
+
+    free(create_action->table_name);
+    if (create_action->column_object != NULL) {
+        releaseColumnObject(create_action->column_object);
+    }
+
+    free(create_action);
+}
+
+void releaseDeleteAction(DeleteAction *delete_action) {
+    if (delete_action == NULL) return;
+
+    free(delete_action->table_name);
+    if (delete_action->where_object != NULL) {
+        releaseWhereObject(delete_action->where_object);
+    }
+
+    free(delete_action);
+}
+
+void releaseAddAction(AddAction *add_action) {
+    if (add_action == NULL) return;
+
+    if (add_action->table_name != NULL) {
+        free(add_action->table_name);
+        add_action->table_name = NULL;
+    }
+
+    if (add_action->column_object != NULL) {
+        releaseColumnObject(add_action->column_object);
+        add_action->column_object = NULL; 
+    }
+
+    free(add_action);
+    add_action = NULL; 
+}
+
+void releaseUpdateObject(UpdateObject* updateObject){
+    if (updateObject == NULL) return;
+
+    if (updateObject->condition != NULL) {
+        releaseCondition(updateObject->condition);
+    }
+
+    if (updateObject->next != NULL) {
+        releaseUpdateObject(updateObject->next);
+    }
+
+    free(updateObject);
+}
+
+void releaseUpdateAction(UpdateAction *update_action) {
+    if (update_action == NULL) return;
+    free(update_action->table_name);
+    if (update_action->update_object != NULL) {
+        releaseUpdateObject(update_action->update_object);
+    }
+    if (update_action->where_object != NULL) {
+        releaseWhereObject(update_action->where_object);
+    }
+
+    free(update_action);
+}
+
+void releaseColumnObject(ColumnObject *column_object) {
+    if (column_object == NULL) return;
+
+    if (column_object->column_list != NULL) {
+        releaseColumnList(column_object->column_list);
+        column_object->column_list = NULL; 
+    }
+
+    free(column_object);
+    column_object = NULL; 
+}
 
 
 
+void releaseColumnList(ColumnList *column_list) {
+    if (column_list == NULL) return;
 
-// void releaseAction(Action* action) {
-//     if (action == NULL) return;
-    
-//     switch (action->type) {
-//         case CREATE_ACTION:
-//             free(action->action.create.tableName);
-//             for (int i = 0; i < action->action.create.columnCount; i++) {
-//                 free(action->action.create.columns[i].name);
-//             }
-//             free(action->action.create.columns);
-//             break;
-//     }
-//     free(action);
-// }
+    if (column_list->columnListUnion.first.column_item != NULL) {
+        releaseColumnItem(column_list->columnListUnion.first.column_item);
+        column_list->columnListUnion.first.column_item = NULL; 
+    }
 
-// void releaseProgram(Program* program) {
-//     if (program == NULL) return;
-//     releaseAction(program->action);
-//     free(program);
-// }
+    if (column_list->columnListUnion.second.column_list != NULL) {
+        releaseColumnList(column_list->columnListUnion.second.column_list);
+        column_list->columnListUnion.second.column_list = NULL;
+    }
+
+    free(column_list);
+    column_list = NULL; 
+}
 
 
+void releaseColumnItem(ColumnItem *column_item) {
+    if (column_item == NULL) return;
 
+    if (column_item->left != NULL) {
+        free(column_item->left);
+        column_item->left = NULL;
+    }
+
+    if (column_item->right != NULL) {
+        free(column_item->right);
+        column_item->right = NULL;
+    }
+
+    free(column_item);
+    column_item = NULL; 
+}
 
 void releaseInsertAction(InsertAction* insert_action) {
-	if (insert_action == NULL) return;
-	
-	free(insert_action->table_name);
-	
-	if (insert_action->columns != NULL) {
-		releaseArray(insert_action->columns); 
-	}
+    if (insert_action == NULL) return;
 
-	if (insert_action->value_list != NULL) {
-		releaseInsertList(insert_action->value_list); 
-	}
+    if (insert_action->table_name != NULL) {
+        free(insert_action->table_name);
+        insert_action->table_name = NULL;
+    }
 
-	free(insert_action);
+    if (insert_action->columns != NULL) {
+        releaseArray(insert_action->columns);
+        insert_action->columns = NULL;
+    }
+
+    if (insert_action->value_list != NULL) {
+        releaseInsertList(insert_action->value_list);
+        insert_action->value_list = NULL;
+    }
+
+    free(insert_action);
 }
+
 
 void releaseArray(Array* array) {
-	if (array == NULL) return;
-
-	if (array->string_list_union.second.string_list != NULL) {
-		releaseArray(array->string_list_union.second.string_list);  
-	}
-
-	free(array->string_list_union.first.string);
-	free(array);
+    if (array == NULL) return;
+    if (array->string_list_union.second.string_list != NULL) {
+        releaseArray(array->string_list_union.second.string_list);
+        array->string_list_union.second.string_list = NULL;
+    }
+    if (array->string_list_union.first.string != NULL) {
+        free(array->string_list_union.first.string);
+        array->string_list_union.first.string = NULL;
+    }
+    free(array);
 }
+
 
 void releaseSelectAction(SelectAction* select_action) {
 	if (select_action == NULL) return;
@@ -153,191 +265,107 @@ void releaseSelectAction(SelectAction* select_action) {
 	free(select_action);
 }
 
-void releaseWhereObject(WhereObject* where_object) {
-	if (where_object == NULL) return;
+void releaseWhereObject(WhereObject *where_object) {
+    if (where_object == NULL) return;
 
-	if (where_object->where_object_union.second.where_object != NULL) {
-		releaseWhereObject(where_object->where_object_union.second.where_object);
-	}
-
-	if (where_object->where_object_union.second.log_op != NULL) {
-		releaseLogOp(where_object->where_object_union.second.log_op);
-	}
-
-	if (where_object->where_object_union.second.condition != NULL) {
-		releaseCondition(where_object->where_object_union.second.condition);
-	}
-
-	free(where_object);
+    if (where_object->where_object_union.first.condition != NULL) {
+        releaseCondition(where_object->where_object_union.first.condition);
+        where_object->where_object_union.first.condition = NULL;
+    }
+    if (where_object->where_object_union.second.condition != NULL) {
+        releaseCondition(where_object->where_object_union.second.condition);
+        where_object->where_object_union.second.condition = NULL;
+    }
+    if (where_object->where_object_union.second.where_object != NULL) {
+        releaseWhereObject(where_object->where_object_union.second.where_object);
+        where_object->where_object_union.second.where_object = NULL;
+    }
+    free(where_object);
 }
 
 void releaseCondition(Condition* condition) {
-	if (condition == NULL) return;
-
+	if (condition == NULL) {
+        return;
+    }
 	free(condition->string);
-
-	if (condition->operator != NULL) {
-		releaseOperator(condition->operator);
-	}
-
-	if (condition->value != NULL) {
+	if (condition->value->type == VALUE_TYPE_STRING) {
 		releaseValue(condition->value);
 	}
-
 	free(condition);
 }
 
-void releaseOperator(Operator* operator) {
-	if (operator == NULL) {
-		return;
-	}
-
-	if (operator->operator_type != NULL) {
-		free(operator->operator_type);
-	}
-
-	free(operator);
-}
 
 void releaseValue(Value* value) {
 if (value == NULL) {
 		return;
 	}
-
 	if (value->values.string != NULL) {
 		free(value->values.string);
 	}
-
 	free(value);
 }
 
 void releaseJoin(Join* join) {
 	if (join == NULL) return;
-
-	free(join->table_name1);
-	free(join->table_name2);
-	free(join->cond1);
-	free(join->cond2);
-
+	releaseCondition(join->cond1);
+	releaseCondition(join->cond2);
 	free(join);
 }
 
 void releaseInsertList(InsertList* insert_list) {
-	if (insert_list == NULL) {
-        return;
-    }
-
+    if (insert_list == NULL) return;
     if (insert_list->first.value_list != NULL) {
         releaseValueList(insert_list->first.value_list);
+        insert_list->first.value_list = NULL;
     }
-
-    if (insert_list->second.value_list != NULL) {
-        releaseValueList(insert_list->second.value_list);
-    }
-
     if (insert_list->second.list != NULL) {
         releaseInsertList(insert_list->second.list);
+        insert_list->second.list = NULL;
     }
-
     free(insert_list);
 }
 
+
 void releaseHavingObject(HavingObject* having_object) {
-	if (having_object == NULL) {
-        return;
-    }
+    if (having_object == NULL) return;
 
     if (having_object->having_object_union.first.condition != NULL) {
         releaseHavingCondition(having_object->having_object_union.first.condition);
+        having_object->having_object_union.first.condition = NULL;
     }
-
     if (having_object->having_object_union.second.condition != NULL) {
         releaseHavingCondition(having_object->having_object_union.second.condition);
+        having_object->having_object_union.second.condition = NULL;
     }
-
-    if (having_object->having_object_union.second.log_op != NULL) {
-        releaseLogOp(having_object->having_object_union.second.log_op);
-    }
-
     if (having_object->having_object_union.second.having_object != NULL) {
         releaseHavingObject(having_object->having_object_union.second.having_object);
+        having_object->having_object_union.second.having_object = NULL;
     }
-
-    if (having_object->having_object_union.third.log_op != NULL) {
-        releaseLogOp(having_object->having_object_union.third.log_op);
-    }
-
-    if (having_object->having_object_union.third.having_object != NULL) {
-        releaseHavingObject(having_object->having_object_union.third.having_object);
-    }
-
     free(having_object);
 }
 
-void releaseLogOp(LogOp* log_op) {
-	if (log_op == NULL) {
-		return;
-	}
-
-	if (log_op->log_op_type != NULL) {
-        free(log_op->log_op_type);
-    }
-
-    free(log_op);
-}
-
 void releaseHavingCondition(HavingCondition* having_condition) {
-	if (having_condition == NULL) {
-        return;
-    }
+	if (having_condition == NULL) return;
 
-    if (having_condition->string != NULL) {
-        free(having_condition->string);
-    }
+	free(having_condition->string);
 
-    if (having_condition->aggregate_func != NULL) {
-        releaseAggFunc(having_condition->aggregate_func);
-    }
-
-    if (having_condition->operator != NULL) {
-        releaseOperator(having_condition->operator);
-    }
-
-    if (having_condition->value != NULL) {
-        releaseValue(having_condition->value);
-    }
-
-    free(having_condition);
-}
-
-void releaseAggFunc(AggFunc* agg_func) {
-	if (agg_func == NULL) {
-		return;
+	if (having_condition->value->type == VALUE_TYPE_STRING) {
+		releaseValue(having_condition->value);
 	}
-
-	if (agg_func->agg_func_value != NULL) {
-        free(agg_func->agg_func_value);
-    }
-
-	free(agg_func);
+	free(having_condition);
 }
 
 void releaseValueList(ValueList* value_list) {
-	if (value_list == NULL) {
-		return;
-	}
+    if (value_list == NULL) return;
 
-	if (value_list->value_list_union.first.value != NULL) {
-		releaseValue(value_list->value_list_union.first.value);
-	}
+    if (value_list->value_list_union.first.value != NULL) {
+        value_list->value_list_union.first.value = NULL;
+    }
 
-	if (value_list->value_list_union.second.value != NULL) {
-		releaseValue(value_list->value_list_union.second.value);
-	}
+    if (value_list->value_list_union.second.value_list != NULL) {
+        releaseValueList(value_list->value_list_union.second.value_list);
+        value_list->value_list_union.second.value_list = NULL;
+    }
 
-	if (value_list->value_list_union.second.value_list != NULL) {
-		releaseValueList(value_list->value_list_union.second.value_list);
-	}
-
-	free(value_list);
+    free(value_list);
 }

@@ -12,6 +12,7 @@ rm --force "$BASE_PATH/src/main/c/frontend/syntactic-analysis/BisonParser.h"
 
 cmake -S . -B build
 cd build
+make clean
 make
 cd ..
 

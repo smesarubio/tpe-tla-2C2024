@@ -2,6 +2,8 @@
     "INSERT": "employees",
     "COLUMNS": ["casa", "perro", "gato"],
     "VALUES": [
-        ["John Doe", 1500, "sales"]
+        ["John Doe", "1500", "sales"],
+        ["Jane Smith", "2000", "marketing"],
+        ["Alice Johnson", "1800", "engineering"]
     ]
 }

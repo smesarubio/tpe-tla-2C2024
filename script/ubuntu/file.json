@@ -1,6 +1,6 @@
 {
-  "ADD" : {
-    "TABLE" : "tabla",
+  "CREATE": {
+    "TABLE": "users",
     "COLUMNS": {
       "id": "INTEGER",
       "name": "STRING",
